@@ -1,0 +1,21 @@
+sequenceDiagram
+    actor Usuario
+    participant UI as Interfaz web
+    participant API as API Express
+    participant Auth as Servicio de autenticación
+    participant BD as PostgreSQL
+    Usuario->>UI: Ingresa usuario y contraseña
+    UI->>API: POST /api/auth/login
+    API->>BD: Buscar cuenta activa por usuario_login
+    BD-->>API: Usuario y password_hash
+    API->>Auth: Verificar contraseña con scrypt
+    alt Credenciales válidas
+        Auth-->>API: Identidad y rol
+        API-->>UI: Cookie HttpOnly de sesión
+        UI->>API: Solicita módulo protegido
+        API->>Auth: Validar sesión y rol
+        Auth-->>API: Acceso autorizado
+        API-->>UI: Datos permitidos
+    else Credenciales inválidas
+        API-->>UI: HTTP 401
+    end

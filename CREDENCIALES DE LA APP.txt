@@ -1,0 +1,11 @@
+USUARIOS PARA INICIAR SESION
+
+USUARIO: operador_prueba
+CONTRASEÑA: Operador123*
+
+________________________________________________
+
+
+USUARIO: admin
+CONTRASEÑA: Admin12345
+

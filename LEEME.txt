@@ -1,0 +1,13 @@
+PORT=3000
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=12345678
+DB_NAME=autoscolombiadb
+# Zona horaria con la que la BD calcula "hoy" (vencimiento de mensualidades)
+DB_TIMEZONE=America/Bogota
+
+# Secreto compartido con el Sistema de Pago. Si se define, POST /api/pagos/confirmacion
+# exige el encabezado "x-webhook-secret" con este valor. Déjelo vacío SOLO para demostraciones
+# (los botones "Sistema de Pago" de la pantalla simulan ese callback sin secreto).
+PAGO_WEBHOOK_SECRET=

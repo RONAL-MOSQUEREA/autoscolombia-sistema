@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+ <rect width="1200" height="800" fill="#f1f5f9"/>
+ <rect width="1200" height="82" fill="#1e3a8a"/>
+ <text x="55" y="51" fill="#fff" font-family="Arial" font-size="28" font-weight="bold">Parqueadero “Autos Colombia”</text>
+ <rect x="380" y="155" width="440" height="510" rx="14" fill="#fff" stroke="#e2e8f0" stroke-width="2"/>
+ <text x="430" y="230" fill="#1e3a8a" font-family="Arial" font-size="34" font-weight="bold">Iniciar sesión</text>
+ <text x="430" y="270" fill="#64748b" font-family="Arial" font-size="17">Ingrese con las credenciales asignadas</text>
+ <text x="430" y="340" fill="#0f172a" font-family="Arial" font-size="18" font-weight="bold">Usuario</text>
+ <rect x="430" y="360" width="340" height="55" rx="6" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+ <text x="450" y="395" fill="#94a3b8" font-family="Arial" font-size="17">Nombre de usuario</text>
+ <text x="430" y="465" fill="#0f172a" font-family="Arial" font-size="18" font-weight="bold">Contraseña</text>
+ <rect x="430" y="485" width="340" height="55" rx="6" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+ <text x="450" y="520" fill="#94a3b8" font-family="Arial" font-size="17">••••••••••</text>
+ <rect x="430" y="575" width="340" height="58" rx="7" fill="#2563eb"/>
+ <text x="600" y="612" text-anchor="middle" fill="#fff" font-family="Arial" font-size="20" font-weight="bold">Ingresar al sistema</text>
+</svg>

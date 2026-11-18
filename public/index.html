@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parqueadero Autos Colombia - Control Operativo</title>
+<style>
+    :root { --azul:#1e3a8a; --azul2:#2563eb; --fondo:#f1f5f9; --borde:#e2e8f0; --texto:#0f172a; --gris:#64748b;
+            --verde:#15803d; --verdebg:#dcfce7; --ambar:#a16207; --ambarbg:#fef9c3; --rojo:#b91c1c; --rojobg:#fee2e2; }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, Helvetica, sans-serif; background: var(--fondo); margin: 0; color: var(--texto); }
+    header { background: var(--azul); color: #fff; padding: 16px 28px; display:flex; justify-content:space-between; align-items:center; }
+    header h1 { margin:0; font-size: 20px; } header small { opacity:.8; }
+    main { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    h2 { font-size: 16px; color: var(--azul); margin: 0 0 12px; }
+    .card { background:#fff; border:1px solid var(--borde); border-radius:8px; padding:16px; }
+    .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:16px; }
+    @media (max-width: 800px) { .grid2 { grid-template-columns: 1fr; } }
+    .stats { display:grid; grid-template-columns: repeat(4,1fr); gap:12px; }
+    @media (max-width: 700px) { .stats { grid-template-columns: repeat(2,1fr); } }
+    .stat { background:#fff; border:1px solid var(--borde); border-radius:8px; padding:12px 14px; }
+    .stat b { display:block; font-size:26px; } .stat span { color:var(--gris); font-size:12px; }
+    .celdas { display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
+    .celda { width:74px; padding:8px 4px; text-align:center; border-radius:6px; font-size:12px; border:1px solid; }
+    .celda b { display:block; font-size:16px; }
+    .Disponible { background:var(--verdebg); color:var(--verde); border-color:#86efac; }
+    .Ocupada { background:var(--rojobg); color:var(--rojo); border-color:#fca5a5; }
+    .Mantenimiento { background:var(--ambarbg); color:var(--ambar); border-color:#fde047; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--borde); }
+    th { color:var(--gris); font-weight:600; font-size:12px; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:bold; }
+    .b-Vigente { background:var(--verdebg); color:var(--verde); }
+    .b-Porvencer { background:var(--ambarbg); color:var(--ambar); }
+    .b-Vencida, .b-Sinmensualidad { background:var(--rojobg); color:var(--rojo); }
+    label { display:block; margin-top:10px; font-size:13px; font-weight:bold; }
+    input, select, textarea { width:100%; padding:8px; margin-top:4px; border:1px solid #cbd5e1; border-radius:4px; font-size:14px; }
+    button { width:100%; margin-top:12px; padding:9px; border:0; border-radius:4px; color:#fff; font-weight:bold; cursor:pointer; background:var(--azul2); }
+    button:disabled { opacity:.55; cursor:not-allowed; }
+    button.rojo { background:#dc2626; } button.verde { background:#16a34a; } button.gris { background:#64748b; }
+    .fila { display:flex; gap:8px; } .fila > * { flex:1; }
+    .msg { margin-top:12px; padding:10px 12px; border-radius:6px; font-size:13px; line-height:1.5; border-left:4px solid; display:none; }
+    .msg.ok { display:block; background:var(--verdebg); border-color:var(--verde); }
+    .msg.warn { display:block; background:var(--ambarbg); border-color:var(--ambar); }
+    .msg.error { display:block; background:var(--rojobg); border-color:var(--rojo); }
+    .estado { margin-top:8px; font-size:13px; min-height:20px; }
+    .nota { color:var(--gris); font-size:12px; margin-top:6px; }
+    /* Iteración 2: pestañas, barra de herramientas y botones de tabla */
+    .tabs { background:#1e40af; display:flex; gap:4px; padding:0 28px; }
+    .tabs a { color:#cbd5e1; padding:10px 18px; text-decoration:none; font-size:14px; border-bottom:3px solid transparent; }
+    .tabs a:hover { color:#fff; } .tabs a.activa { color:#fff; font-weight:bold; border-color:#fff; }
+    .barra { display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap; margin-bottom:10px; }
+    .barra > div { flex:1; min-width:140px; } .barra > .fijo { flex:0 0 auto; min-width:0; }
+    .barra label { margin-top:0; } .barra button { margin-top:0; }
+    button.mini { width:auto; margin:0 4px 0 0; padding:4px 9px; font-size:12px; }
+    td.acciones { white-space:nowrap; }
+    .b-Activo { background:var(--verdebg); color:var(--verde); } .b-Inactivo { background:var(--rojobg); color:var(--rojo); }
+    .b-Disponible { background:var(--verdebg); color:var(--verde); } .b-Ocupada { background:var(--rojobg); color:var(--rojo); }
+    .b-Mantenimiento { background:var(--ambarbg); color:var(--ambar); }
+    tr.sel { background:#eff6ff; } .vacio { color:var(--gris); text-align:center; padding:14px; }
+    .detalle p { margin:4px 0; font-size:13px; } .titulofila { display:flex; justify-content:space-between; align-items:center; }
+    [hidden] { display:none !important; }
+    .auth-wrap { max-width:420px; margin:8vh auto; padding:24px; }
+    .auth-wrap h2 { font-size:22px; }
+    .top-actions { display:flex; align-items:center; gap:14px; }
+    .top-actions button { width:auto; margin:0; padding:8px 14px; }
+    .auth-user { font-size:13px; }
+</style>
+</head>
+<body>
+<header>
+    <div><h1>Parqueadero "Autos Colombia"</h1><small>Control operativo · Servicio por mensualidad</small></div>
+    <div class="top-actions"><small id="fechaHoy"></small><small class="auth-user" id="usuarioSesion" hidden></small><button id="btnLogout" class="gris" hidden type="button">Cerrar sesión</button></div>
+</header>
+<section class="card auth-wrap" id="pantallaLogin">
+  <h2>Iniciar sesión</h2><p class="nota">Ingrese con las credenciales asignadas por el administrador.</p>
+  <form id="formLogin"><label for="loginUsuario">Usuario</label><input id="loginUsuario" autocomplete="username" required maxlength="40">
+    <label for="loginPassword">Contraseña</label><input id="loginPassword" type="password" autocomplete="current-password" required>
+    <button type="submit">Ingresar al sistema</button></form><div class="msg" id="msgLogin" role="alert"></div>
+</section>
+<nav class="tabs" id="tabs" hidden>
+    <a href="#operacion" data-vista="operacion">Operación</a>
+    <a href="#usuarios" data-vista="usuarios">Usuarios</a>
+    <a href="#celdas" data-vista="celdas">Celdas</a>
+</nav>
+<main id="contenidoApp" hidden>
+    <section id="vistaCliente" class="card" hidden><h2>Mi cuenta</h2><div id="datosCuenta"></div></section>
+    <div class="msg" id="errorGlobal" role="alert" style="margin:0 0 16px"></div>
+    <div id="vistaOperacion">
+    <!-- DASHBOARD -->
+    <section id="dashboard">
+        <div class="stats">
+            <div class="stat"><b id="stDisp">-</b><span>Celdas disponibles</span></div>
+            <div class="stat"><b id="stOcup">-</b><span>Celdas ocupadas</span></div>
+            <div class="stat"><b id="stMant">-</b><span>En mantenimiento</span></div>
+            <div class="stat"><b id="stAlert">-</b><span>Mensualidades por vencer / vencidas</span></div>
+        </div>
+        <div class="card" style="margin-top:16px"><h2>Mapa de celdas</h2><div class="celdas" id="mapaCeldas"></div></div>
+        <div class="grid2">
+            <div class="card"><h2>Vehículos en el parqueadero</h2>
+                <table><thead><tr><th>Placa</th><th>Celda</th><th>Ticket</th><th>Permanencia</th></tr></thead><tbody id="tbDentro"></tbody></table></div>
+            <div class="card"><h2>Estado de mensualidades</h2>
+                <table><thead><tr><th>Placa</th><th>Vence</th><th>Estado</th></tr></thead><tbody id="tbMens"></tbody></table></div>
+        </div>
+    </section>
+
+    <div class="grid2">
+        <!-- INGRESO -->
+        <div class="card">
+            <h2>Registrar ingreso</h2>
+            <form id="formIngreso">
+                <label>Placa del vehículo</label>
+                <input id="placaIngreso" placeholder="Ej: ABC123" maxlength="7" required autocomplete="off">
+                <div class="estado" id="estadoPrevio"></div>
+                <label>Novedad al ingresar (opcional)</label>
+                <textarea id="novedadIngreso" rows="2" placeholder="Rayones, abolladuras u objetos visibles..."></textarea>
+                <p class="nota">La celda se asigna automáticamente según el tipo de vehículo.</p>
+                <button type="submit">Registrar ingreso</button>
+            </form>
+            <div class="msg" id="msgIngreso"></div>
+        </div>
+        <!-- SALIDA -->
+        <div class="card">
+            <h2>Registrar salida</h2>
+            <form id="formSalida">
+                <label>Placa del vehículo</label>
+                <input id="placaSalida" placeholder="Ej: ABC123" maxlength="7">
+                <label>o código de ticket</label>
+                <input id="ticketSalida" placeholder="Ej: TK1A2B3C4D">
+                <p class="nota">Ingrese la placa o el ticket. El servicio está cubierto por la mensualidad: no se cobra por tiempo.</p>
+                <button type="submit" class="rojo">Registrar salida</button>
+            </form>
+            <div class="msg" id="msgSalida"></div>
+        </div>
+        <!-- NOVEDAD -->
+        <div class="card">
+            <h2>Registrar novedad</h2>
+            <form id="formNovedad">
+                <label>Placa</label><input id="placaNovedad" placeholder="Ej: ABC123" maxlength="7" required>
+                <label>Descripción</label><textarea id="descNovedad" rows="3" required></textarea>
+                <button type="submit" class="gris">Guardar novedad</button>
+            </form>
+            <div class="msg" id="msgNovedad"></div>
+        </div>
+        <!-- MENSUALIDAD -->
+        <div class="card">
+            <h2>Mensualidad y pago</h2>
+            <form id="formMens">
+                <label>Placa</label><input id="placaMens" placeholder="Ej: XYZ987" maxlength="7" required>
+                <div class="fila">
+                    <div><label>Meses</label><input id="mesesMens" type="number" min="1" max="12" value="1"></div>
+                    <div><label>Método</label><select id="metodoMens"><option>PSE</option><option>Tarjeta</option><option>Efectivo</option></select></div>
+                </div>
+                <button type="submit" class="verde">Generar mensualidad y pago</button>
+            </form>
+            <div class="msg" id="msgMens"></div>
+            <div class="fila" id="simulaPago" style="display:none">
+                <button class="verde" id="btnAprobar" type="button">Sistema de Pago: aprobar</button>
+                <button class="rojo" id="btnRechazar" type="button">Sistema de Pago: rechazar</button>
+            </div>
+        </div>
+    </div>
+    </div><!-- /vistaOperacion -->
+
+    <!-- ============ ITERACIÓN 2: GESTIÓN DE USUARIOS ============ -->
+    <div id="vistaUsuarios" hidden>
+        <div class="grid2" style="margin-top:0">
+            <div class="card" style="grid-column:1 / -1">
+                <div class="titulofila"><h2>Usuarios</h2><span class="nota" id="totalUsuarios"></span></div>
+                <div class="barra">
+                    <div><label for="fBuscar">Buscar (nombre, documento, correo o placa)</label><input id="fBuscar" placeholder="Ej: Carlos, 1017123456 o ABC123"></div>
+                    <div class="fijo"><label for="fTipoU">Tipo</label><select id="fTipoU"><option value="">Todos</option><option>Cliente</option><option>Operario</option><option>Administrador</option></select></div>
+                    <div class="fijo"><label for="fEstadoU">Estado</label><select id="fEstadoU"><option value="">Todos</option><option>Activo</option><option>Inactivo</option></select></div>
+                    <div class="fijo"><button type="button" id="btnNuevoUsuario" class="verde">+ Nuevo usuario</button></div>
+                </div>
+                <table><thead><tr><th>Nombre</th><th>Documento</th><th>Tipo</th><th>Estado</th><th>Vehículos</th><th>Acciones</th></tr></thead><tbody id="tbUsuarios"></tbody></table>
+                <div class="msg" id="msgUsuarios"></div>
+            </div>
+            <div class="card" id="cardFormUsuario" hidden>
+                <h2 id="tituloFormUsuario">Nuevo usuario</h2>
+                <form id="formUsuario" novalidate>
+                    <label for="uNombre">Nombre completo *</label><input id="uNombre" maxlength="100" autocomplete="off">
+                    <div class="fila">
+                        <div><label for="uDocumento">Documento *</label><input id="uDocumento" maxlength="20" autocomplete="off"></div>
+                        <div><label for="uTipo">Tipo de usuario</label><select id="uTipo"><option>Cliente</option><option>Operario</option><option>Administrador</option></select></div>
+                    </div>
+                    <div class="fila">
+                        <div><label for="uTelefono">Teléfono</label><input id="uTelefono" maxlength="20" placeholder="3001234567" autocomplete="off"></div>
+                        <div><label for="uCorreo">Correo</label><input id="uCorreo" maxlength="100" placeholder="nombre@correo.com" autocomplete="off"></div>
+                    </div>
+                    <div class="fila"><button type="submit" id="btnGuardarUsuario">Guardar</button><button type="button" class="gris" id="btnCancelarUsuario">Cancelar</button></div>
+                </form>
+                <div class="msg" id="msgFormUsuario"></div>
+            </div>
+            <div class="card" id="cardDetalleUsuario" hidden>
+                <div class="titulofila"><h2>Detalle del usuario</h2><button type="button" class="mini gris" id="btnCerrarDetalle">Cerrar</button></div>
+                <div class="detalle" id="datosUsuario"></div>
+                <h2 style="margin-top:14px">Vehículos</h2>
+                <table><thead><tr><th>Placa</th><th>Tipo</th><th>Mensualidad</th><th>Dentro</th><th></th></tr></thead><tbody id="tbVehiculos"></tbody></table>
+                <form id="formVehiculo" novalidate style="margin-top:10px">
+                    <h2 id="tituloFormVehiculo" style="font-size:14px">Registrar vehículo</h2>
+                    <div class="fila">
+                        <div><label for="vPlaca">Placa *</label><input id="vPlaca" maxlength="7" placeholder="ABC123" autocomplete="off"></div>
+                        <div><label for="vTipo">Tipo *</label><select id="vTipo"><option>Automovil</option><option>Motocicleta</option><option>Camioneta</option></select></div>
+                    </div>
+                    <div class="fila">
+                        <div><label for="vMarca">Marca</label><input id="vMarca" maxlength="50"></div>
+                        <div><label for="vModelo">Modelo</label><input id="vModelo" maxlength="50"></div>
+                        <div><label for="vColor">Color</label><input id="vColor" maxlength="30"></div>
+                    </div>
+                    <div class="fila"><button type="submit" id="btnGuardarVehiculo">Registrar vehículo</button><button type="button" class="gris" id="btnCancelarVehiculo" hidden>Cancelar edición</button></div>
+                </form>
+                <div class="msg" id="msgVehiculo"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ ITERACIÓN 2: GESTIÓN DE CELDAS ============ -->
+    <div id="vistaCeldas" hidden>
+        <div class="grid2" style="margin-top:0">
+            <div class="card" style="grid-column:1 / -1">
+                <div class="titulofila"><h2>Celdas</h2><span class="nota" id="totalCeldas"></span></div>
+                <div class="barra">
+                    <div class="fijo"><label for="fEstadoC">Estado</label><select id="fEstadoC"><option value="">Todos</option><option>Disponible</option><option>Ocupada</option><option>Mantenimiento</option></select></div>
+                    <div class="fijo"><label for="fTipoC">Tipo</label><select id="fTipoC"><option value="">Todos</option><option>Automovil</option><option>Motocicleta</option><option>General</option></select></div>
+                    <div class="fijo" style="margin-left:auto"><button type="button" id="btnNuevaCelda" class="verde">+ Nueva celda</button></div>
+                </div>
+                <table><thead><tr><th>Número</th><th>Tipo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="tbCeldas"></tbody></table>
+                <div class="msg" id="msgCeldas"></div>
+            </div>
+            <div class="card" id="cardFormCelda" hidden>
+                <h2 id="tituloFormCelda">Nueva celda</h2>
+                <form id="formCelda" novalidate>
+                    <div class="fila">
+                        <div><label for="cNumero">Número de celda *</label><input id="cNumero" type="number" min="1" max="9999" placeholder="Ej: 104"></div>
+                        <div><label for="cTipo">Tipo de celda</label><select id="cTipo"><option>Automovil</option><option>Motocicleta</option><option selected>General</option></select></div>
+                    </div>
+                    <p class="nota">Una celda nueva queda <b>Disponible</b>. «General» sirve para cualquier tipo de vehículo. No se puede editar una celda ocupada.</p>
+                    <div class="fila"><button type="submit" id="btnGuardarCelda">Guardar</button><button type="button" class="gris" id="btnCancelarCelda">Cancelar</button></div>
+                </form>
+                <div class="msg" id="msgFormCelda"></div>
+            </div>
+            <div class="card" id="cardDetalleCelda" hidden>
+                <div class="titulofila"><h2>Detalle de la celda</h2><button type="button" class="mini gris" id="btnCerrarCelda">Cerrar</button></div>
+                <div class="detalle" id="datosCelda"></div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let sesionActual = null;
+const esc = (t) => String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const moneda = (n) => '$' + Number(n).toLocaleString('es-CO');
+const slug = (t) => String(t).replace(/\s+/g, '');
+const limpiarPlaca = (t) => String(t).replace(/[\s-]/g, '');   // "ABC-123" y "ABC 123" valen como ABC123
+
+// Nunca lanza: ante un fallo de red o una respuesta que no es JSON devuelve un error con el mismo formato
+async function api(metodo, ruta, cuerpo) {
+    try {
+        const r = await fetch('/api' + ruta, { method: metodo, credentials: 'same-origin', headers: {'Content-Type':'application/json'},
+            body: cuerpo ? JSON.stringify(cuerpo) : undefined });
+        let data;
+        try { data = await r.json(); }
+        catch { data = { error: `Respuesta inesperada del servidor (HTTP ${r.status}).`, codigo: 'RESPUESTA_INVALIDA' }; }
+        return { ok: r.ok, status: r.status, data };
+    } catch {
+        return { ok: false, status: 0,
+                 data: { error: 'No se pudo contactar al servidor. Verifique que esté en ejecución.', codigo: 'SIN_CONEXION' } };
+    }
+}
+function mostrar(id, tipo, html) { const e = $(id); e.className = 'msg ' + tipo; e.innerHTML = html; }
+
+// Deshabilita los botones mientras la petición está en curso (evita enviar dos veces por doble clic)
+async function bloqueando(botones, fn) {
+    botones.forEach(b => b.disabled = true);
+    try { await fn(); } finally { botones.forEach(b => b.disabled = false); }
+}
+const botonesDe = (form) => [...form.querySelectorAll('button')];
+
+// Mensajes específicos para cada regla de negocio
+const TITULOS = {
+    MENSUALIDAD_VENCIDA: 'Ingreso bloqueado: mensualidad vencida',
+    SIN_MENSUALIDAD: 'Ingreso bloqueado: sin mensualidad vigente',
+    VEHICULO_NO_REGISTRADO: 'Vehículo no registrado',
+    INGRESO_DUPLICADO: 'Ingreso duplicado rechazado',
+    SIN_CELDA_COMPATIBLE: 'Sin cupo: no hay celda compatible disponible',
+    SIN_INGRESO_ACTIVO: 'Salida rechazada: no hay ingreso activo',
+    TICKET_NO_COINCIDE: 'El ticket no corresponde a la placa',
+    PLACA_INVALIDA: 'Placa con formato inválido',
+    PAGO_PENDIENTE: 'Ya existe un pago pendiente para esta placa',
+    DESCRIPCION_MUY_LARGA: 'Descripción demasiado larga',
+    NO_AUTORIZADO: 'El Sistema de Pago no está autorizado',
+    CONFLICTO_CONCURRENCIA: 'Sistema ocupado, intente de nuevo',
+    BD_NO_DISPONIBLE: 'Base de datos no disponible',
+    SIN_CONEXION: 'Sin conexión con el servidor',
+    DATOS_INVALIDOS: 'Revise los datos del formulario',
+    DATOS_INCOMPLETOS: 'Faltan datos',
+    DOCUMENTO_DUPLICADO: 'Documento ya registrado',
+    PLACA_DUPLICADA: 'Placa ya registrada',
+    USUARIO_NO_ENCONTRADO: 'El usuario no existe',
+    USUARIO_INACTIVO: 'Usuario inactivo',
+    USUARIO_CON_VEHICULO_DENTRO: 'No se puede inactivar: hay un vehículo dentro',
+    USUARIO_CON_VEHICULOS: 'El usuario tiene vehículos',
+    TIPO_USUARIO_SIN_VEHICULOS: 'Solo los Clientes tienen vehículos',
+    VEHICULO_DENTRO: 'El vehículo está dentro del parqueadero',
+    PROPIETARIO_NO_VALIDO: 'Propietario no válido',
+    CELDA_DUPLICADA: 'Número de celda ya existe',
+    CELDA_OCUPADA: 'La celda está ocupada',
+    CELDA_CON_HISTORIAL: 'La celda tiene historial y no se puede eliminar',
+    CELDA_NO_ENCONTRADA: 'La celda no existe'
+};
+const errorHtml = (d) => `<b>${esc(TITULOS[d.codigo] || 'No fue posible completar la operación')}</b><br>${esc(d.error)}`;
+
+async function cargarDashboard() {
+    const [dash, cel] = await Promise.all([api('GET', '/dashboard'), api('GET', '/celdas')]);
+    if (!dash.ok || !cel.ok) {   // antes: TypeError silencioso y pantalla vacía
+        mostrar('errorGlobal', 'error', errorHtml(dash.ok ? cel.data : dash.data));
+        return;
+    }
+    $('errorGlobal').className = 'msg'; $('errorGlobal').innerHTML = '';
+    const d = dash.data;
+    $('fechaHoy').textContent = d.fecha;
+    $('stDisp').textContent = d.celdas.disponibles; $('stOcup').textContent = d.celdas.ocupadas;
+    $('stMant').textContent = d.celdas.mantenimiento;
+    $('stAlert').textContent = d.mensualidades.filter(m => ['Por vencer','Vencida'].includes(m.estado)).length;
+    $('mapaCeldas').innerHTML = cel.data.map(c =>
+        `<div class="celda ${esc(slug(c.estado))}"><b>${esc(c.numero_celda)}</b>${esc(c.tipo)}<br>${esc(c.estado)}</div>`).join('');
+    $('tbDentro').innerHTML = d.vehiculos_en_parqueadero.map(v =>
+        `<tr><td>${esc(v.placa)}</td><td>${esc(v.numero_celda)}</td><td>${esc(v.codigo_ticket)}</td><td>${esc(v.minutos)} min</td></tr>`).join('')
+        || '<tr><td colspan="4" style="color:#64748b">Parqueadero vacío</td></tr>';
+    $('tbMens').innerHTML = d.mensualidades.map(m =>
+        `<tr><td>${esc(m.placa)}</td><td>${esc(m.fecha_fin || '-')}</td><td><span class="badge b-${esc(slug(m.estado))}">${esc(m.estado)}</span></td></tr>`).join('');
+}
+
+// Estado de la mensualidad ANTES de registrar el ingreso
+let temporizador, secuencia = 0;
+function consultarEstadoPrevio() {
+    clearTimeout(temporizador);
+    const placa = limpiarPlaca($('placaIngreso').value);
+    const mia = ++secuencia;                       // descarta respuestas viejas que lleguen tarde
+    if (placa.length < 6) { $('estadoPrevio').innerHTML = ''; return; }
+    temporizador = setTimeout(async () => {
+        const { ok, data } = await api('GET', '/vehiculos/' + encodeURIComponent(placa) + '/estado');
+        if (mia !== secuencia) return;
+        if (!ok) { $('estadoPrevio').innerHTML = `<span class="badge b-Vencida">${esc(data.error)}</span>`; return; }
+        const m = data.mensualidad;
+        let txt = `${esc(data.tipo)} ${esc(data.marca || '')} ${esc(data.modelo || '')} · <span class="badge b-${esc(slug(m.estado))}">${esc(m.estado)}</span>`;
+        if (m.fecha_fin) txt += ` (vence ${esc(m.fecha_fin)})`;
+        if (data.ingreso_activo) txt += `<br><b>Ya está en la celda ${esc(data.ingreso_activo.numero_celda)}.</b>`;
+        $('estadoPrevio').innerHTML = txt;
+    }, 300);
+}
+$('placaIngreso').addEventListener('input', consultarEstadoPrevio);
+
+$('formIngreso').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await bloqueando(botonesDe(e.target), async () => {
+        const { ok, data } = await api('POST', '/ingresos',
+            { placa: $('placaIngreso').value, novedad: $('novedadIngreso').value });
+        if (!ok) mostrar('msgIngreso', 'error', errorHtml(data));
+        else {
+            mostrar('msgIngreso', data.alerta ? 'warn' : 'ok',
+                `<b>Ingreso registrado</b><br>Celda asignada: <b>${esc(data.celda.numero_celda)}</b> (${esc(data.celda.tipo)})<br>` +
+                `Ticket: <b>${esc(data.codigo_ticket)}</b><br>Mensualidad vigente hasta ${esc(data.mensualidad.vigente_hasta)}` +
+                (data.alerta ? `<br>⚠ ${esc(data.alerta)}` : ''));
+            $('novedadIngreso').value = '';
+        }
+        consultarEstadoPrevio();   // refresca el aviso "Ya está en la celda..."
+        await cargarDashboard();
+    });
+});
+
+$('formSalida').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await bloqueando(botonesDe(e.target), async () => {
+        const { ok, data } = await api('POST', '/salidas',
+            { placa: $('placaSalida').value || undefined, codigo_ticket: $('ticketSalida').value || undefined });
+        if (!ok) mostrar('msgSalida', 'error', errorHtml(data));
+        else {
+            mostrar('msgSalida', data.alerta ? 'warn' : 'ok',
+                `<b>Salida registrada</b> · Placa ${esc(data.placa)}<br>Celda liberada: ${esc(data.celda.numero_celda)}<br>` +
+                `Tiempo de permanencia: <b>${esc(data.tiempo_permanencia)}</b> (informativo)<br>` +
+                `Cobro por estancia: ${moneda(data.cobro_por_estancia)} — cubierto por la mensualidad` +
+                (data.mensualidad_vigente_hasta ? ` (vigente hasta ${esc(data.mensualidad_vigente_hasta)})` : '') +
+                (data.alerta ? `<br>⚠ ${esc(data.alerta)}` : ''));
+            $('placaSalida').value = ''; $('ticketSalida').value = '';
+        }
+        consultarEstadoPrevio();
+        await cargarDashboard();
+    });
+});
+
+$('formNovedad').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await bloqueando(botonesDe(e.target), async () => {
+        const { ok, data } = await api('POST', '/novedades',
+            { placa: $('placaNovedad').value, descripcion: $('descNovedad').value });
+        mostrar('msgNovedad', ok ? 'ok' : 'error', ok
+            ? `<b>Novedad registrada</b> para ${esc(data.placa)}` + (data.id_registro ? ' (asociada al ingreso activo)' : '')
+            : errorHtml(data));
+        if (ok) { $('descNovedad').value = ''; await cargarDashboard(); }
+    });
+});
+
+let referenciaPendiente = null;
+$('formMens').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await bloqueando(botonesDe(e.target), async () => {
+        const { ok, data } = await api('POST', '/mensualidades',
+            { placa: $('placaMens').value, meses: Number($('mesesMens').value), metodo_pago: $('metodoMens').value });
+        if (!ok) {
+            mostrar('msgMens', 'error', errorHtml(data));
+            // Si ya había un pago pendiente, se ofrece confirmarlo en vez de dejarlo huérfano
+            if (data.referencia_externa) { referenciaPendiente = data.referencia_externa; $('simulaPago').style.display = 'flex'; }
+            else $('simulaPago').style.display = 'none';
+            return;
+        }
+        referenciaPendiente = data.referencia_externa;
+        mostrar('msgMens', 'warn', `<b>Pago pendiente</b> · Ref. ${esc(data.referencia_externa)}<br>` +
+            `Periodo: ${esc(data.fecha_inicio)} a ${esc(data.fecha_fin)} · Valor: <b>${moneda(data.monto)}</b><br>` +
+            'La mensualidad queda vigente cuando el Sistema de Pago confirme el pago.');
+        $('simulaPago').style.display = 'flex';
+    });
+});
+async function confirmar(estado) {
+    const botones = [$('btnAprobar'), $('btnRechazar')];
+    await bloqueando(botones, async () => {
+        const { ok, data } = await api('POST', '/pagos/confirmacion', { referencia_externa: referenciaPendiente, estado });
+        mostrar('msgMens', ok ? (estado === 'Aprobado' ? 'ok' : 'error') : 'error',
+            ok ? `<b>Pago ${esc(estado.toLowerCase())}</b>` : errorHtml(data));
+        $('simulaPago').style.display = 'none';
+        consultarEstadoPrevio();
+        await cargarDashboard();
+    });
+}
+$('btnAprobar').onclick = () => confirmar('Aprobado');
+$('btnRechazar').onclick = () => confirmar('Rechazado');
+
+// ====================== ITERACIÓN 2: navegación por pestañas ======================
+const VISTAS = ['operacion', 'usuarios', 'celdas'];
+function mostrarVista() {
+    const v = VISTAS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'operacion';
+    VISTAS.forEach(n => { $('vista' + n[0].toUpperCase() + n.slice(1)).hidden = n !== v; });
+    document.querySelectorAll('#tabs a').forEach(a => a.classList.toggle('activa', a.dataset.vista === v));
+    if (v === 'operacion') cargarDashboard();
+    if (v === 'usuarios') { limpiarMsg('msgUsuarios'); cargarUsuarios(); }
+    if (v === 'celdas') { limpiarMsg('msgCeldas'); cargarCeldas(); }
+}
+window.addEventListener('hashchange', mostrarVista);
+const limpiarMsg = (id) => { $(id).className = 'msg'; $(id).innerHTML = ''; };
+// Recargar una lista NO debe borrar el mensaje de la acción que acaba de hacer el usuario:
+// solo se limpia si el mensaje que había era un error de carga de esa misma lista.
+const errorDeLista = {};
+function listaCargada(idMsg, r) {
+    if (!r.ok) { mostrar(idMsg, 'error', errorHtml(r.data)); errorDeLista[idMsg] = true; return false; }
+    if (errorDeLista[idMsg]) { limpiarMsg(idMsg); errorDeLista[idMsg] = false; }
+    return true;
+}
+const val = (id) => $(id).value;
+
+// ====================== ITERACIÓN 2: gestión de usuarios ======================
+let usuarioEditando = null;    // id del usuario en edición (null = alta)
+let usuarioAbierto = null;     // id del usuario cuyo detalle se muestra
+let vehiculoEditando = null;   // placa del vehículo en edición (null = alta)
+
+async function cargarUsuarios() {
+    const q = new URLSearchParams();
+    if (val('fBuscar').trim()) q.set('buscar', val('fBuscar').trim());
+    if (val('fTipoU')) q.set('tipo', val('fTipoU'));
+    if (val('fEstadoU')) q.set('estado', val('fEstadoU'));
+    const resp = await api('GET', '/usuarios?' + q);
+    if (!listaCargada('msgUsuarios', resp)) return;
+    const data = resp.data;
+    $('totalUsuarios').textContent = data.total + (data.total === 1 ? ' usuario' : ' usuarios');
+    $('tbUsuarios').innerHTML = data.usuarios.map(u =>
+        `<tr data-id="${esc(u.id_usuario)}" class="${u.id_usuario === usuarioAbierto ? 'sel' : ''}">
+            <td>${esc(u.nombre)}</td><td>${esc(u.documento)}</td><td>${esc(u.tipo_usuario)}</td>
+            <td><span class="badge b-${esc(u.estado)}">${esc(u.estado)}</span></td><td>${esc(u.total_vehiculos)}</td>
+            <td class="acciones"><button class="mini" data-accion="ver">Ver</button><button class="mini gris" data-accion="editar">Editar</button>
+            <button class="mini ${u.estado === 'Activo' ? 'rojo' : 'verde'}" data-accion="estado" data-estado="${u.estado === 'Activo' ? 'Inactivo' : 'Activo'}">${u.estado === 'Activo' ? 'Inactivar' : 'Reactivar'}</button></td></tr>`).join('')
+        || '<tr><td colspan="6" class="vacio">No hay usuarios con esos filtros.</td></tr>';
+}
+let temporizadorBusqueda;
+['fBuscar'].forEach(id => $(id).addEventListener('input', () => { clearTimeout(temporizadorBusqueda); temporizadorBusqueda = setTimeout(cargarUsuarios, 300); }));
+['fTipoU', 'fEstadoU'].forEach(id => $(id).addEventListener('change', () => { limpiarMsg('msgUsuarios'); cargarUsuarios(); }));
+
+function abrirFormUsuario(u) {
+    usuarioEditando = u ? u.id_usuario : null;
+    $('tituloFormUsuario').textContent = u ? 'Editar usuario' : 'Nuevo usuario';
+    $('uNombre').value = u ? u.nombre : ''; $('uDocumento').value = u ? u.documento : '';
+    $('uTelefono').value = u && u.telefono ? u.telefono : ''; $('uCorreo').value = u && u.correo ? u.correo : '';
+    $('uTipo').value = u ? u.tipo_usuario : 'Cliente';
+    limpiarMsg('msgFormUsuario'); $('cardFormUsuario').hidden = false; $('uNombre').focus();
+}
+$('btnNuevoUsuario').onclick = () => abrirFormUsuario(null);
+$('btnCancelarUsuario').onclick = () => { $('cardFormUsuario').hidden = true; };
+
+$('formUsuario').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await bloqueando(botonesDe(e.target), async () => {
+        const cuerpo = { nombre: val('uNombre'), documento: val('uDocumento'), telefono: val('uTelefono'),
+                         correo: val('uCorreo'), tipo_usuario: val('uTipo') };
+        const r = usuarioEditando ? await api('PUT', '/usuarios/' + usuarioEditando, cuerpo) : await api('POST', '/usuarios', cuerpo);
+        if (!r.ok) { mostrar('msgFormUsuario', 'error', errorHtml(r.data)); return; }
+        mostrar('msgFormUsuario', 'ok', `<b>${esc(r.data.mensaje)}</b>`);
+        const id = r.data.usuario.id_usuario;
+        if (!usuarioEditando) {   // alta: el formulario queda limpio y en modo "Nuevo" (no se puede pisar al usuario recién creado)
+            ['uNombre', 'uDocumento', 'uTelefono', 'uCorreo'].forEach(c => { $(c).value = ''; }); $('uTipo').value = 'Cliente';
+        }
+        await cargarUsuarios();
+        if (usuarioAbierto === id) await abrirDetalleUsuario(id);
+    });
+});
+
+$('tbUsuarios').addEventListener('click', async (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    const id = Number(b.closest('tr').dataset.id);
+    if (b.dataset.accion === 'ver') await abrirDetalleUsuario(id);
+    if (b.dataset.accion === 'editar') {
+        const r = await api('GET', '/usuarios/' + id);
+        if (r.ok) abrirFormUsuario(r.data.usuario); else mostrar('msgUsuarios', 'error', errorHtml(r.data));
+    }
+    if (b.dataset.accion === 'estado') {
+        const nuevo = b.dataset.estado;
+        if (!confirm(nuevo === 'Inactivo' ? '¿Inactivar este usuario? Sus vehículos no podrán ingresar.' : '¿Reactivar este usuario?')) return;
+        await bloqueando([b], async () => {
+            const r = await api('PATCH', `/usuarios/${id}/estado`, { estado: nuevo });
+            mostrar('msgUsuarios', r.ok ? 'ok' : 'error', r.ok ? `<b>${esc(r.data.mensaje)}</b>` : errorHtml(r.data));
+            await cargarUsuarios();
+            if (usuarioAbierto === id) await abrirDetalleUsuario(id);
+        });
+    }
+});
+
+async function abrirDetalleUsuario(id) {
+    const r = await api('GET', '/usuarios/' + id);
+    if (!r.ok) { mostrar('msgUsuarios', 'error', errorHtml(r.data)); return; }
+    usuarioAbierto = id;
+    const u = r.data.usuario;
+    $('datosUsuario').innerHTML = `<p><b>${esc(u.nombre)}</b> · <span class="badge b-${esc(u.estado)}">${esc(u.estado)}</span></p>
+        <p>Documento: ${esc(u.documento)} · Tipo: ${esc(u.tipo_usuario)}</p>
+        <p>Teléfono: ${esc(u.telefono || '—')} · Correo: ${esc(u.correo || '—')}</p><p class="nota">Registrado: ${esc(u.fecha_registro)}</p>`;
+    $('tbVehiculos').innerHTML = r.data.vehiculos.map(v =>
+        `<tr data-placa="${esc(v.placa)}"><td><b>${esc(v.placa)}</b><br><span class="nota">${esc([v.marca, v.modelo, v.color].filter(Boolean).join(' · '))}</span></td>
+         <td>${esc(v.tipo)}</td><td><span class="badge b-${esc(slug(v.mensualidad.estado))}">${esc(v.mensualidad.estado)}</span></td>
+         <td>${v.dentro_del_parqueadero ? 'Sí' : 'No'}</td><td><button class="mini gris" data-accion="editar-vehiculo">Editar</button></td></tr>`).join('')
+        || '<tr><td colspan="5" class="vacio">Sin vehículos registrados.</td></tr>';
+    $('tbVehiculos').querySelectorAll('tr[data-placa]').forEach((tr, i) => { tr.vehiculo = r.data.vehiculos[i]; }); // datos para el botón Editar
+    cancelarEdicionVehiculo(); limpiarMsg('msgVehiculo');
+    $('cardDetalleUsuario').hidden = false;
+    $('formVehiculo').hidden = !(u.estado === 'Activo' && u.tipo_usuario === 'Cliente');
+    document.querySelectorAll('#tbUsuarios tr').forEach(tr => tr.classList.toggle('sel', Number(tr.dataset.id) === id));
+}
+$('btnCerrarDetalle').onclick = () => { usuarioAbierto = null; $('cardDetalleUsuario').hidden = true; cargarUsuarios(); };
+
+function cancelarEdicionVehiculo() {
+    vehiculoEditando = null; $('formVehiculo').reset(); $('vPlaca').disabled = false;
+    $('tituloFormVehiculo').textContent = 'Registrar vehículo'; $('btnGuardarVehiculo').textContent = 'Registrar vehículo';
+    $('btnCancelarVehiculo').hidden = true;
+}
+$('btnCancelarVehiculo').onclick = cancelarEdicionVehiculo;
+$('tbVehiculos').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    const v = b.closest('tr').vehiculo; vehiculoEditando = v.placa;
+    $('vPlaca').value = v.placa; $('vPlaca').disabled = true; $('vTipo').value = v.tipo;
+    $('vMarca').value = v.marca || ''; $('vModelo').value = v.modelo || ''; $('vColor').value = v.color || '';
+    $('tituloFormVehiculo').textContent = 'Editar vehículo ' + v.placa; $('btnGuardarVehiculo').textContent = 'Guardar cambios';
+    $('btnCancelarVehiculo').hidden = false; limpiarMsg('msgVehiculo'); $('formVehiculo').hidden = false;
+});
+$('formVehiculo').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await bloqueando(botonesDe(e.target), async () => {
+        const datos = { tipo: val('vTipo'), marca: val('vMarca'), modelo: val('vModelo'), color: val('vColor') };
+        const r = vehiculoEditando ? await api('PUT', '/vehiculos/' + vehiculoEditando, datos)
+                                   : await api('POST', `/usuarios/${usuarioAbierto}/vehiculos`, { placa: val('vPlaca'), ...datos });
+        if (!r.ok) { mostrar('msgVehiculo', 'error', errorHtml(r.data)); return; }
+        const mensaje = r.data.mensaje;
+        await abrirDetalleUsuario(usuarioAbierto); await cargarUsuarios();
+        mostrar('msgVehiculo', 'ok', `<b>${esc(mensaje)}</b>`);
+    });
+});
+
+// ====================== ITERACIÓN 2: gestión de celdas ======================
+let celdaEditando = null;   // id de la celda en edición (null = alta)
+
+async function cargarCeldas() {
+    const q = new URLSearchParams();
+    if (val('fEstadoC')) q.set('estado', val('fEstadoC'));
+    if (val('fTipoC')) q.set('tipo', val('fTipoC'));
+    const resp = await api('GET', '/celdas?' + q);
+    if (!listaCargada('msgCeldas', resp)) return;
+    const data = resp.data;
+    $('totalCeldas').textContent = data.length + (data.length === 1 ? ' celda' : ' celdas');
+    $('tbCeldas').innerHTML = data.map(c =>
+        `<tr data-id="${esc(c.id_celda)}"><td><b>${esc(c.numero_celda)}</b></td><td>${esc(c.tipo)}</td>
+         <td><span class="badge b-${esc(c.estado)}">${esc(c.estado)}</span></td>
+         <td class="acciones"><button class="mini" data-accion="ver">Ver</button><button class="mini gris" data-accion="editar" data-numero="${esc(c.numero_celda)}" data-tipo="${esc(c.tipo)}">Editar</button>
+         ${c.estado === 'Ocupada' ? '' : `<button class="mini ${c.estado === 'Disponible' ? 'gris' : 'verde'}" data-accion="estado" data-estado="${c.estado === 'Disponible' ? 'Mantenimiento' : 'Disponible'}">${c.estado === 'Disponible' ? 'A mantenimiento' : 'Habilitar'}</button>`}
+         <button class="mini rojo" data-accion="eliminar">Eliminar</button></td></tr>`).join('')
+        || '<tr><td colspan="4" class="vacio">No hay celdas con esos filtros.</td></tr>';
+}
+['fEstadoC', 'fTipoC'].forEach(id => $(id).addEventListener('change', () => { limpiarMsg('msgCeldas'); cargarCeldas(); }));
+
+function abrirFormCelda(c) {
+    celdaEditando = c ? c.id : null;
+    $('tituloFormCelda').textContent = c ? 'Editar celda' : 'Nueva celda';
+    $('cNumero').value = c ? c.numero : ''; $('cTipo').value = c ? c.tipo : 'General';
+    limpiarMsg('msgFormCelda'); $('cardFormCelda').hidden = false; $('cNumero').focus();
+}
+$('btnNuevaCelda').onclick = () => abrirFormCelda(null);
+$('btnCancelarCelda').onclick = () => { $('cardFormCelda').hidden = true; };
+$('btnCerrarCelda').onclick = () => { $('cardDetalleCelda').hidden = true; };
+
+$('formCelda').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await bloqueando(botonesDe(e.target), async () => {
+        const cuerpo = { numero_celda: val('cNumero') === '' ? undefined : Number(val('cNumero')), tipo: val('cTipo') };
+        const r = celdaEditando ? await api('PUT', '/celdas/' + celdaEditando, cuerpo) : await api('POST', '/celdas', cuerpo);
+        if (!r.ok) { mostrar('msgFormCelda', 'error', errorHtml(r.data)); return; }
+        mostrar('msgFormCelda', 'ok', `<b>${esc(r.data.mensaje)}</b>`);
+        if (!celdaEditando) { $('cNumero').value = ''; }
+        await cargarCeldas();
+    });
+});
+
+$('tbCeldas').addEventListener('click', async (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    const tr = b.closest('tr'), id = Number(tr.dataset.id), accion = b.dataset.accion;
+    if (accion === 'ver') {
+        const r = await api('GET', '/celdas/' + id);
+        if (!r.ok) { mostrar('msgCeldas', 'error', errorHtml(r.data)); return; }
+        const c = r.data.celda, o = r.data.ocupacion_actual;
+        $('datosCelda').innerHTML = `<p><b>Celda ${esc(c.numero_celda)}</b> · ${esc(c.tipo)} · <span class="badge b-${esc(c.estado)}">${esc(c.estado)}</span></p>
+            <p>${o ? `Ocupada por <b>${esc(o.placa)}</b> (ticket ${esc(o.codigo_ticket)}) desde ${esc(o.fecha_entrada)}` : 'Nadie la ocupa en este momento.'}</p>
+            <p class="nota">Ingresos históricos en esta celda: ${esc(r.data.total_usos)}${r.data.total_usos > 0 ? ' (por eso no se puede eliminar)' : ''}</p>`;
+        $('cardDetalleCelda').hidden = false;
+    }
+    if (accion === 'editar') abrirFormCelda({ id, numero: b.dataset.numero, tipo: b.dataset.tipo });
+    if (accion === 'estado') {
+        await bloqueando([b], async () => {
+            const r = await api('PATCH', `/celdas/${id}/estado`, { estado: b.dataset.estado });
+            mostrar('msgCeldas', r.ok ? 'ok' : 'error', r.ok ? `<b>${esc(r.data.mensaje)}</b>` : errorHtml(r.data));
+            await cargarCeldas();
+        });
+    }
+    if (accion === 'eliminar') {
+        if (!confirm('¿Eliminar esta celda? Esta acción no se puede deshacer.')) return;
+        await bloqueando([b], async () => {
+            const r = await api('DELETE', '/celdas/' + id);
+            mostrar('msgCeldas', r.ok ? 'ok' : 'error', r.ok ? `<b>${esc(r.data.mensaje)}</b>` : errorHtml(r.data));
+            if (r.ok) { $('cardDetalleCelda').hidden = true; if (celdaEditando === id) $('cardFormCelda').hidden = true; }
+            await cargarCeldas();
+        });
+    }
+});
+
+async function iniciarSesion() {
+  const r = await api('POST', '/auth/login', { usuario: val('loginUsuario'), password: val('loginPassword') });
+  if (!r.ok) { mostrar('msgLogin', 'error', esc(r.data.error || 'No fue posible iniciar sesión.')); return; }
+  await cargarSesion();
+}
+async function cargarSesion() {
+  const r = await api('GET', '/auth/me');
+  if (!r.ok) { sesionActual = null; $('pantallaLogin').hidden = false; $('tabs').hidden = true; $('contenidoApp').hidden = true; $('btnLogout').hidden = true; $('usuarioSesion').hidden = true; return; }
+  sesionActual = r.data.usuario;
+  $('pantallaLogin').hidden = true; $('tabs').hidden = sesionActual.rol === 'Cliente'; $('contenidoApp').hidden = false;
+  $('btnLogout').hidden = false; $('usuarioSesion').hidden = false;
+  $('usuarioSesion').textContent = `${sesionActual.nombre} · ${sesionActual.rol}`;
+  $('vistaCliente').hidden = sesionActual.rol !== 'Cliente';
+  $('vistaOperacion').hidden = sesionActual.rol === 'Cliente';
+  document.querySelector('#tabs [data-vista="usuarios"]').hidden = sesionActual.rol !== 'Administrador';
+  document.querySelector('#tabs [data-vista="celdas"]').hidden = sesionActual.rol !== 'Administrador';
+  if (sesionActual.rol !== 'Administrador' && ['#usuarios','#celdas'].includes(location.hash)) history.replaceState(null, '', location.pathname);
+  if (sesionActual.rol === 'Cliente') {
+    const cuenta = await api('GET', '/auth/mi-cuenta');
+    if (!cuenta.ok) { $('datosCuenta').textContent = cuenta.data.error; return; }
+    const u = cuenta.data.cuenta;
+    $('datosCuenta').innerHTML = `<p><b>${esc(u.nombre)}</b></p><p>Documento: ${esc(u.documento)} · Correo: ${esc(u.correo || '—')}</p><h3>Mis vehículos</h3><table><thead><tr><th>Placa</th><th>Vehículo</th><th>Último vencimiento</th><th>Pago</th></tr></thead><tbody>${u.vehiculos.map(v=>`<tr><td>${esc(v.placa)}</td><td>${esc([v.marca,v.modelo].filter(Boolean).join(' '))}</td><td>${esc(v.fecha_fin || 'Sin mensualidad')}</td><td>${esc(v.estado_pago || '—')}</td></tr>`).join('') || '<tr><td colspan="4">No tiene vehículos registrados.</td></tr>'}</tbody></table>`;
+  } else { mostrarVista(); }
+}
+$('formLogin').addEventListener('submit', async e => { e.preventDefault(); await iniciarSesion(); });
+$('btnLogout').addEventListener('click', async () => { await api('POST','/auth/logout',{}); $('formLogin').reset(); await cargarSesion(); });
+
+// La pantalla inicial siempre exige sesión; no se muestran datos privados antes de validar identidad.
+cargarSesion();
+
+// La permanencia y los vencimientos cambian con el tiempo: se refresca solo mientras la pestaña está visible
+setInterval(() => { if (!document.hidden && !$('vistaOperacion').hidden) cargarDashboard(); }, 30000);
+</script>
+</body>
+</html>

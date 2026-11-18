@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: autoscolombia-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: autoscolombiadb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-autoscolombia_local}
+      TZ: America/Bogota
+    ports:
+      - "5432:5432"
+    volumes:
+      - autoscolombia_data:/var/lib/postgresql/data
+      - ./database/script_pg.sql:/docker-entrypoint-initdb.d/01-autoscolombia.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d autoscolombiadb"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    container_name: autoscolombia-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-autoscolombia_local}
+      DB_NAME: autoscolombiadb
+      DB_TIMEZONE: America/Bogota
+      PAGO_WEBHOOK_SECRET: ${PAGO_WEBHOOK_SECRET:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    ports:
+      - "3000:3000"
+
+volumes:
+  autoscolombia_data:
