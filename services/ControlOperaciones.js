@@ -267,6 +267,43 @@ class ControlOperaciones {
         });
     }
 
+    // ---- Iteración 3: consulta administrativa e historial de pagos ------------
+    async consultarPagos({ estado, placa, desde, hasta, pagina = 1, limite = 20 } = {}) {
+        const estados = ['Pendiente', 'Aprobado', 'Rechazado'];
+        if (estado && !estados.includes(estado)) {
+            throw new DomainError('FILTRO_INVALIDO', 'El estado del pago no es válido.', 400);
+        }
+        const placaNormalizada = placa ? Vehiculo.normalizarPlaca(placa) : '';
+        if (placaNormalizada && !/^[A-Z0-9]{5,7}$/.test(placaNormalizada)) {
+            throw new DomainError('PLACA_INVALIDA', 'La placa no tiene un formato válido.', 400);
+        }
+        for (const [nombre, fecha] of [['desde', desde], ['hasta', hasta]]) {
+            if (fecha) {
+                const formato = /^\d{4}-\d{2}-\d{2}$/.test(fecha);
+                const fechaValida = formato && !Number.isNaN(Date.parse(`${fecha}T00:00:00Z`)) &&
+                    new Date(`${fecha}T00:00:00Z`).toISOString().slice(0, 10) === fecha;
+                if (!fechaValida) throw new DomainError('FILTRO_INVALIDO',
+                    `La fecha ${nombre} debe ser una fecha real con formato AAAA-MM-DD.`, 400);
+            }
+        }
+        if (desde && hasta && desde > hasta) {
+            throw new DomainError('FILTRO_INVALIDO', 'La fecha inicial no puede ser posterior a la fecha final.', 400);
+        }
+        const pag = Number(pagina), lim = Number(limite);
+        if (!Number.isInteger(pag) || pag < 1 || !Number.isInteger(lim) || lim < 1 || lim > 100) {
+            throw new DomainError('PAGINACION_INVALIDA', 'La página debe ser positiva y el límite estar entre 1 y 100.', 400);
+        }
+        const resultado = await this.repos.pagos.listar(this.pool,
+            { estado, placa: placaNormalizada, desde, hasta, pagina: pag, limite: lim });
+        const resumen = await this.pool.query(
+            `SELECT COUNT(*) FILTER (WHERE estado_pago = 'Aprobado')::int AS aprobados,
+                    COUNT(*) FILTER (WHERE estado_pago = 'Pendiente')::int AS pendientes,
+                    COUNT(*) FILTER (WHERE estado_pago = 'Rechazado')::int AS rechazados,
+                    COALESCE(SUM(monto) FILTER (WHERE estado_pago = 'Aprobado'), 0)::numeric(12,2) AS total_recaudado
+             FROM Pago`);
+        return { ...resultado, resumen: resumen.rows[0] };
+    }
+
     // Lo invoca el Sistema de Pago externo (callback / webhook)
     async confirmarPago({ referencia_externa, estado }) {
         if (!['Aprobado', 'Rechazado'].includes(estado)) {

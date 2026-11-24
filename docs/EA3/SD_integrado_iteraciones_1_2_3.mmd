@@ -1,0 +1,99 @@
+sequenceDiagram
+  autonumber
+  actor Operario
+  actor Admin as Administrador
+  participant UI as Interfaz web
+  participant API as Express/API
+  participant Auth as Autenticación/Roles
+  participant BL as Servicios de negocio
+  participant Repo as Repositorios
+  participant DB as PostgreSQL
+  participant PSP as Sistema de Pago
+
+  Note over Operario,DB: Iteración 1 — Operación e ingreso/salida
+  Operario->>UI: Consultar placa para ingreso
+  UI->>API: GET /vehiculos/{placa}/estado
+  API->>Auth: Validar sesión y rol
+  Auth-->>API: Operario autorizado
+  API->>BL: validar mensualidad y propietario
+  BL->>Repo: consultar vehículo/mensualidad
+  Repo->>DB: SELECT
+  DB-->>UI: Estado y vigencia
+  Operario->>UI: Registrar ingreso/salida
+  UI->>API: POST /ingresos o /salidas
+  API->>BL: ejecutar operación
+  BL->>Repo: transacción acceso/celda
+  Repo->>DB: BEGIN / INSERT o UPDATE / COMMIT
+  DB-->>UI: Ticket o confirmación de salida
+
+  Note over Admin,DB: Iteración 2 — Usuarios y celdas
+  Admin->>UI: Administrar usuarios/celdas
+  UI->>API: GET/POST/PUT/PATCH /usuarios y /celdas
+  API->>Auth: Validar Administrador
+  Auth-->>API: Autorizado
+  API->>BL: GestionarUsuarios / GestionCeldas
+  BL->>Repo: consultas y cambios
+  Repo->>DB: SQL parametrizado
+  DB-->>UI: Resultado
+
+  Note over Admin,DB: Iteración 3 — Gestión de pagos
+  Admin->>UI: Generar mensualidad
+  UI->>API: POST /mensualidades
+  API->>Auth: Validar Administrador
+  API->>BL: registrarMensualidad
+  BL->>Repo: insertar mensualidad y pago pendiente
+  Repo->>DB: BEGIN / INSERT / COMMIT
+  BL-->>UI: Referencia y valor pendiente
+  PSP->>API: POST /pagos/confirmacion + secreto
+  API->>Auth: Validar secreto webhook
+  API->>BL: confirmarPago(referencia, estado)
+  BL->>Repo: bloquear pago y actualizar pago/mensualidad
+  Repo->>DB: BEGIN / UPDATE / COMMIT
+  DB-->>PSP: Confirmación
+  Admin->>UI: Consultar historial y filtros
+  UI->>API: GET /pagos?estado&placa&desde&hasta
+  API->>Auth: Validar Administrador
+  API->>BL: consultarPagos
+  BL->>Repo: listar + resumen
+  Repo->>DB: SELECT paginado + agregados
+  DB-->>UI: Historial, indicadores y paginación
+
+
+  Note over Admin,DB: Seguridad transversal - Inicio de sesión y validación de cuenta
+  Admin->>UI: Ingresa usuario y contraseña
+  UI->>API: POST /api/auth/login
+  API->>DB: Buscar usuario activo por usuario_login
+  DB-->>API: Cuenta y password_hash
+  API->>Auth: Verificar contraseña con scrypt
+  alt Credenciales válidas
+    Auth-->>API: Identidad, rol y sesión
+    API-->>UI: Cookie HttpOnly de sesión
+  else Credenciales inválidas o cuenta inactiva
+    API-->>UI: HTTP 401 - Acceso rechazado
+  end
+
+  Note over Admin,DB: Asignación administrativa de credenciales
+  Admin->>UI: Abrir detalle de usuario activo
+  UI->>API: PATCH /api/usuarios/{id}/credenciales
+  API->>Auth: Validar sesión y rol Administrador
+  Auth-->>API: Administrador autorizado
+  API->>BL: asignarCredenciales
+  BL->>Repo: Validar usuario activo y guardar hash scrypt
+  Repo->>DB: UPDATE Usuario
+  DB-->>UI: Confirmación sin password_hash
+
+  Note over Admin,DB: Invalidación de sesión por inactivación
+  Admin->>UI: Inactivar usuario
+  UI->>API: PATCH /api/usuarios/{id}/estado
+  API->>Auth: Validar sesión y rol Administrador
+  API->>BL: cambiarEstadoUsuario
+  BL->>Repo: Actualizar estado de cuenta
+  Repo->>DB: UPDATE Usuario SET estado = Inactivo
+  DB-->>UI: Cuenta inactivada
+  Operario->>UI: Solicitar recurso protegido con sesión anterior
+  UI->>API: Solicitud con cookie existente
+  API->>Auth: Validar token y consultar estado actual en DB
+  Auth->>DB: Consultar estado de la cuenta
+  DB-->>Auth: Estado Inactivo
+  Auth->>Auth: Eliminar sesión y expirar cookie
+  Auth-->>UI: HTTP 401 - CUENTA_INACTIVA

@@ -1,8 +1,9 @@
-// BusinessLogic - Iteración 2: gestión de usuarios y de sus vehículos. Implementa IGestionUsuarios.
+﻿// BusinessLogic - IteraciÃ³n 2: gestiÃ³n de usuarios y de sus vehÃ­culos. Implementa IGestionUsuarios.
 const { Usuario, Vehiculo, DomainError } = require('../models');
 const { verificarImplementacion } = require('./IGestionUsuarios');
 const ValidadorMensualidad = require('./ValidadorMensualidad');
 const { idPositivo, filtroDeLista } = require('./utilidades');
+const { hashPassword } = require('../auth');
 
 class GestionUsuarios {
     constructor({ enTransaccion, pool, repos }) {
@@ -19,7 +20,7 @@ class GestionUsuarios {
         return usuario;
     }
 
-    // ¿Alguno de los vehículos del usuario está dentro del parqueadero ahora mismo?
+    // Â¿Alguno de los vehÃ­culos del usuario estÃ¡ dentro del parqueadero ahora mismo?
     async _vehiculosDentro(ex, id_usuario) {
         const vehiculos = await this.repos.vehiculos.listarPorUsuario(ex, id_usuario);
         const dentro = [];
@@ -57,7 +58,7 @@ class GestionUsuarios {
         return { ...resultado, pagina: pag, limite: lim };
     }
 
-    // ---- RF09: detalle del usuario con sus vehículos y el estado de cada mensualidad
+    // ---- RF09: detalle del usuario con sus vehÃ­culos y el estado de cada mensualidad
     async consultarUsuario(idCrudo) {
         const id = idPositivo(idCrudo, 'del usuario');
         const usuario = await this._usuarioOError(this.pool, id);
@@ -81,12 +82,12 @@ class GestionUsuarios {
                 const otro = await this.repos.usuarios.buscarPorDocumento(tx, campos.documento);
                 if (otro) throw new DomainError('DOCUMENTO_DUPLICADO', `Ya existe un usuario con el documento ${campos.documento}.`, 409);
             }
-            // Un usuario con vehículos solo puede ser Cliente
+            // Un usuario con vehÃ­culos solo puede ser Cliente
             if (campos.tipo_usuario && campos.tipo_usuario !== 'Cliente') {
                 const vehiculos = await this.repos.vehiculos.listarPorUsuario(tx, id);
                 if (vehiculos.length) {
                     throw new DomainError('USUARIO_CON_VEHICULOS',
-                        'No se puede cambiar el tipo: el usuario tiene vehículos registrados (solo los Clientes tienen vehículos).', 409);
+                        'No se puede cambiar el tipo: el usuario tiene vehÃ­culos registrados (solo los Clientes tienen vehÃ­culos).', 409);
                 }
             }
             const usuario = await this.repos.usuarios.actualizar(tx, id, campos);
@@ -94,14 +95,14 @@ class GestionUsuarios {
         });
     }
 
-    // ---- RF11: inactivar / reactivar (baja lógica: el usuario nunca se borra) --
+    // ---- RF11: inactivar / reactivar (baja lÃ³gica: el usuario nunca se borra) --
     async cambiarEstadoUsuario(idCrudo, estado) {
         const id = idPositivo(idCrudo, 'del usuario');
         if (!Usuario.ESTADOS.includes(estado)) {
             throw new DomainError('ESTADO_INVALIDO', `El estado debe ser: ${Usuario.ESTADOS.join(', ')}.`, 400);
         }
         return this.enTransaccion(async (tx) => {
-            const usuario = await this._usuarioOError(tx, id, true); // el bloqueo también serializa con los ingresos
+            const usuario = await this._usuarioOError(tx, id, true); // el bloqueo tambiÃ©n serializa con los ingresos
             if (usuario.estado === estado) {
                 return { mensaje: `El usuario ya estaba ${estado.toLowerCase()}.`, id_usuario: id, estado };
             }
@@ -109,7 +110,7 @@ class GestionUsuarios {
                 const dentro = await this._vehiculosDentro(tx, id);
                 if (dentro.length) {
                     throw new DomainError('USUARIO_CON_VEHICULO_DENTRO',
-                        `No se puede inactivar: ${dentro.join(', ')} está dentro del parqueadero. Registre primero la salida.`,
+                        `No se puede inactivar: ${dentro.join(', ')} estÃ¡ dentro del parqueadero. Registre primero la salida.`,
                         409, { placas: dentro });
                 }
             }
@@ -118,36 +119,63 @@ class GestionUsuarios {
         });
     }
 
-    // ---- RF12: registrar vehículo a un usuario --------------------------------
+    // ---- RF12: registrar vehÃ­culo a un usuario --------------------------------
+    // Asignación segura de credenciales desde la aplicación
+    async asignarCredenciales(idCrudo, datos) {
+        const id = idPositivo(idCrudo, 'del usuario');
+        const d = datos || {};
+        const usuario_login = typeof d.usuario_login === 'string' ? d.usuario_login.trim() : '';
+        const password = typeof d.password === 'string' ? d.password : '';
+        if (!/^[A-Za-z0-9._-]{3,40}$/.test(usuario_login)) {
+            throw new DomainError('USUARIO_LOGIN_INVALIDO', 'El nombre de usuario debe tener entre 3 y 40 caracteres: letras, números, punto, guion o guion bajo.', 400);
+        }
+        if (password.length < 10) {
+            throw new DomainError('PASSWORD_INVALIDO', 'La contraseña debe tener al menos 10 caracteres.', 400);
+        }
+        return this.enTransaccion(async (tx) => {
+            const usuario = await this._usuarioOError(tx, id, true);
+            if (!usuario.estaActivo()) {
+                throw new DomainError('USUARIO_INACTIVO', 'No se pueden asignar credenciales a un usuario inactivo.', 409);
+            }
+            const actualizado = await this.repos.usuarios.asignarCredenciales(tx, id, {
+                usuario_login,
+                password_hash: hashPassword(password)
+            });
+            if (!actualizado) {
+                throw new DomainError('USUARIO_INACTIVO', 'La cuenta no está activa y no puede recibir credenciales.', 409);
+            }
+            return { mensaje: 'Credenciales asignadas exitosamente.', usuario: actualizado };
+        });
+    }
     async registrarVehiculo(idCrudo, datos) {
         const id = idPositivo(idCrudo, 'del usuario');
         const d = datos || {};
         const placa = Vehiculo.normalizarPlaca(d.placa);
         if (!Vehiculo.esPlacaValida(placa)) {
-            throw new DomainError('PLACA_INVALIDA', 'La placa no tiene un formato válido (ej: ABC123 o ABC12D).', 400);
+            throw new DomainError('PLACA_INVALIDA', 'La placa no tiene un formato vÃ¡lido (ej: ABC123 o ABC12D).', 400);
         }
         const campos = Vehiculo.validarDatos(d);
         return this.enTransaccion(async (tx) => {
             const usuario = await this._usuarioOError(tx, id, true);
             if (!usuario.estaActivo()) {
-                throw new DomainError('USUARIO_INACTIVO', 'No se pueden registrar vehículos a un usuario inactivo.', 409);
+                throw new DomainError('USUARIO_INACTIVO', 'No se pueden registrar vehÃ­culos a un usuario inactivo.', 409);
             }
             if (!usuario.esCliente()) {
-                throw new DomainError('TIPO_USUARIO_SIN_VEHICULOS', 'Solo los usuarios de tipo Cliente pueden tener vehículos.', 409);
+                throw new DomainError('TIPO_USUARIO_SIN_VEHICULOS', 'Solo los usuarios de tipo Cliente pueden tener vehÃ­culos.', 409);
             }
             if (await this.repos.vehiculos.buscarPorPlaca(tx, placa)) {
-                throw new DomainError('PLACA_DUPLICADA', `La placa ${placa} ya está registrada.`, 409);
+                throw new DomainError('PLACA_DUPLICADA', `La placa ${placa} ya estÃ¡ registrada.`, 409);
             }
             const vehiculo = await this.repos.vehiculos.crear(tx, { placa, id_usuario: id, ...campos });
-            return { mensaje: 'Vehículo registrado exitosamente.', vehiculo };
+            return { mensaje: 'VehÃ­culo registrado exitosamente.', vehiculo };
         });
     }
 
-    // ---- RF13: actualizar vehículo (datos, tipo o cambio de propietario) -------
+    // ---- RF13: actualizar vehÃ­culo (datos, tipo o cambio de propietario) -------
     async actualizarVehiculo(placaCruda, datos) {
         const placa = Vehiculo.normalizarPlaca(placaCruda);
         if (!Vehiculo.esPlacaValida(placa)) {
-            throw new DomainError('PLACA_INVALIDA', 'La placa no tiene un formato válido (ej: ABC123 o ABC12D).', 400);
+            throw new DomainError('PLACA_INVALIDA', 'La placa no tiene un formato vÃ¡lido (ej: ABC123 o ABC12D).', 400);
         }
         const d = datos || {};
         const campos = Vehiculo.validarDatos(d, { parcial: true });
@@ -158,13 +186,13 @@ class GestionUsuarios {
         }
         return this.enTransaccion(async (tx) => {
             const vehiculo = await this.repos.vehiculos.buscarPorPlaca(tx, placa, { bloquear: true });
-            if (!vehiculo) throw new DomainError('VEHICULO_NO_REGISTRADO', `El vehículo con placa ${placa} no está registrado.`, 404);
+            if (!vehiculo) throw new DomainError('VEHICULO_NO_REGISTRADO', `El vehÃ­culo con placa ${placa} no estÃ¡ registrado.`, 404);
 
             const cambiaTipo = campos.tipo && campos.tipo !== vehiculo.tipo;
             const cambiaDueno = nuevoPropietario !== null && nuevoPropietario !== vehiculo.id_usuario;
             if ((cambiaTipo || cambiaDueno) && await this.repos.accesos.buscarActivoPorPlaca(tx, placa)) {
                 throw new DomainError('VEHICULO_DENTRO',
-                    'No se puede cambiar el tipo ni el propietario mientras el vehículo está dentro del parqueadero.', 409);
+                    'No se puede cambiar el tipo ni el propietario mientras el vehÃ­culo estÃ¡ dentro del parqueadero.', 409);
             }
             if (cambiaDueno) {
                 const dueno = await this._usuarioOError(tx, nuevoPropietario, true);
@@ -174,9 +202,10 @@ class GestionUsuarios {
                 campos.id_usuario = nuevoPropietario;
             }
             const actualizado = await this.repos.vehiculos.actualizar(tx, placa, campos);
-            return { mensaje: 'Vehículo actualizado exitosamente.', vehiculo: actualizado };
+            return { mensaje: 'VehÃ­culo actualizado exitosamente.', vehiculo: actualizado };
         });
     }
 }
 
 module.exports = GestionUsuarios;
+

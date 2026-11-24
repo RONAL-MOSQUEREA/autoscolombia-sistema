@@ -1,0 +1,64 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1270" viewBox="0 0 1500 1270">
+<defs>
+<marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0 L0 6 L9 3z" fill="#334155"/></marker>
+<marker id="ret" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0 L0 6 L9 3z" fill="#64748b"/></marker>
+<style>
+.t{font:bold 28px Arial;fill:#0f172a} .s{font:15px Arial;fill:#475569}
+.h{fill:#e2e8f0;stroke:#334155;stroke-width:2} .p{font:bold 14px Arial;fill:#0f172a;text-anchor:middle}
+.life{stroke:#94a3b8;stroke-width:2;stroke-dasharray:8 7}
+.m{stroke:#334155;stroke-width:2;fill:none;marker-end:url(#arr)} .r{stroke:#64748b;stroke-width:2;stroke-dasharray:7 5;fill:none;marker-end:url(#ret)}
+.tx{font:13px Arial;fill:#0f172a} .f{font:bold 14px Arial;fill:#7f1d1d}
+</style></defs><rect width="100%" height="100%" fill="#fff"/>
+<text x="45" y="48" class="t">SD-02 Â· Registrar salida de vehÃ­culo</text><text x="45" y="76" class="s">LocalizaciÃ³n del ingreso activo, cÃ¡lculo de permanencia y liberaciÃ³n de celda</text>
+<rect x="37.5" y="105" width="125" height="52" rx="8" class="h"/>
+<text x="100.0" y="137" class="p">Administrador / Operario</text>
+<line x1="100.0" y1="157" x2="100.0" y2="1170" class="life"/>
+<rect x="297.5" y="105" width="125" height="52" rx="8" class="h"/>
+<text x="360.0" y="137" class="p">Interfaz web</text>
+<line x1="360.0" y1="157" x2="360.0" y2="1170" class="life"/>
+<rect x="557.5" y="105" width="125" height="52" rx="8" class="h"/>
+<text x="620.0" y="137" class="p">API Express</text>
+<line x1="620.0" y1="157" x2="620.0" y2="1170" class="life"/>
+<rect x="795.5" y="105" width="169" height="52" rx="8" class="h"/>
+<text x="880.0" y="137" class="p">ControlOperaciones</text>
+<line x1="880.0" y1="157" x2="880.0" y2="1170" class="life"/>
+<rect x="1077.5" y="105" width="125" height="52" rx="8" class="h"/>
+<text x="1140.0" y="137" class="p">Repositorios</text>
+<line x1="1140.0" y1="157" x2="1140.0" y2="1170" class="life"/>
+<rect x="1337.5" y="105" width="125" height="52" rx="8" class="h"/>
+<text x="1400.0" y="137" class="p">PostgreSQL</text>
+<line x1="1400.0" y1="157" x2="1400.0" y2="1170" class="life"/>
+<path d="M100.0 205 L360.0 205" class="m"/>
+<text x="230.0" y="196" text-anchor="middle" class="tx">1. Ingresa placa o cÃ³digo de ticket</text>
+<path d="M360.0 267 L620.0 267" class="m"/>
+<text x="490.0" y="258" text-anchor="middle" class="tx">2. POST /api/operaciones/salidas</text>
+<path d="M620.0 329 L880.0 329" class="m"/>
+<text x="750.0" y="320" text-anchor="middle" class="tx">3. registrarSalida(identificador)</text>
+<path d="M880.0 391 L1140.0 391" class="m"/>
+<text x="1010.0" y="382" text-anchor="middle" class="tx">4. Buscar acceso activo por placa o ticket</text>
+<path d="M1140.0 453 L1400.0 453" class="m"/>
+<text x="1270.0" y="444" text-anchor="middle" class="tx">5. SELECT acceso activo y celda asociada</text>
+<path d="M1400.0 515 L1140.0 515" class="r"/>
+<text x="1270.0" y="506" text-anchor="middle" class="tx">6. Datos del ingreso y celda</text>
+<path d="M880.0 577 L880.0 577" class="m"/>
+<text x="880.0" y="568" text-anchor="middle" class="tx">7. Validar que exista un ingreso activo</text>
+<path d="M880.0 639 L1140.0 639" class="m"/>
+<text x="1010.0" y="630" text-anchor="middle" class="tx">8. Calcular tiempo de permanencia</text>
+<path d="M1140.0 701 L1400.0 701" class="m"/>
+<text x="1270.0" y="692" text-anchor="middle" class="tx">9. Actualizar acceso con fecha de salida</text>
+<path d="M1400.0 763 L1140.0 763" class="r"/>
+<text x="1270.0" y="754" text-anchor="middle" class="tx">10. Salida registrada</text>
+<path d="M880.0 825 L1140.0 825" class="m"/>
+<text x="1010.0" y="816" text-anchor="middle" class="tx">11. Liberar celda ocupada</text>
+<path d="M1140.0 887 L1400.0 887" class="m"/>
+<text x="1270.0" y="878" text-anchor="middle" class="tx">12. UPDATE celda a Disponible</text>
+<path d="M1400.0 949 L1140.0 949" class="r"/>
+<text x="1270.0" y="940" text-anchor="middle" class="tx">13. Celda liberada</text>
+<path d="M880.0 1011 L620.0 1011" class="r"/>
+<text x="750.0" y="1002" text-anchor="middle" class="tx">14. Confirmar salida y duraciÃ³n</text>
+<path d="M620.0 1073 L360.0 1073" class="r"/>
+<text x="490.0" y="1064" text-anchor="middle" class="tx">15. HTTP 200 Â· Mostrar salida registrada</text>
+<rect x="65" y="1195" width="1370" height="42" rx="8" fill="#fee2e2" stroke="#b91c1c"/>
+<text x="750.0" y="1221" text-anchor="middle" class="f">AutenticaciÃ³n obligatoria: Administrador u Operario activo Â· API verifica sesiÃ³n, estado y rol Â· 401 sesiÃ³n invÃ¡lida / 403 rol no autorizado Â· Sin ingreso: 404 / Conflicto: 409</text>
+</svg>
+

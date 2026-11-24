@@ -1,23 +1,24 @@
-const express = require('express');
-const { hashPassword, verifyPassword, crearSesion, destruirSesion, requireAuth } = require('../auth');
+﻿const express = require('express');
+const { hashPassword, verifyPassword, crearSesion, destruirSesion, crearRequireAuth } = require('../auth');
 
 module.exports = (pool) => {
   const router = express.Router();
+  const requireAuth = crearRequireAuth(pool);
   router.post('/login', async (req, res, next) => {
     try {
       const { usuario, password } = req.body || {};
-      if (!usuario || !password) return res.status(400).json({ error: 'Ingrese usuario y contraseña.' });
+      if (!usuario || !password) return res.status(400).json({ error: 'Ingrese usuario y contraseÃ±a.' });
       const { rows } = await pool.query(
         `SELECT id_usuario, nombre, usuario_login, password_hash, tipo_usuario, estado
          FROM Usuario WHERE LOWER(usuario_login) = LOWER($1) LIMIT 1`, [String(usuario).trim()]);
       const u = rows[0];
       if (!u || u.estado !== 'Activo' || !verifyPassword(password, u.password_hash))
-        return res.status(401).json({ error: 'Usuario o contraseña incorrectos, o cuenta inactiva.' });
+        return res.status(401).json({ error: 'Usuario o contraseÃ±a incorrectos, o cuenta inactiva.' });
       crearSesion(res, u);
       res.json({ usuario: { id: u.id_usuario, nombre: u.nombre, usuario: u.usuario_login, rol: u.tipo_usuario } });
     } catch (e) { next(e); }
   });
-  router.post('/logout', (req, res) => { destruirSesion(req, res); res.json({ mensaje: 'Sesión cerrada.' }); });
+  router.post('/logout', (req, res) => { destruirSesion(req, res); res.json({ mensaje: 'SesiÃ³n cerrada.' }); });
   router.get('/me', requireAuth, (req, res) => res.json({ usuario: req.user }));
   router.get('/mi-cuenta', requireAuth, async (req, res, next) => {
     try {
@@ -35,3 +36,4 @@ module.exports = (pool) => {
   });
   return router;
 };
+

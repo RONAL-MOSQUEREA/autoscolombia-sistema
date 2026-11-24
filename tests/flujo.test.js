@@ -93,7 +93,7 @@ test('RF02 mensualidad por vencer: permite ingresar pero alerta', async () => {
 test('RF06 pago: mensualidad queda pendiente hasta que el Sistema de Pago confirma', async () => {
     const crear = await api('POST', '/mensualidades', { placa: 'XYZ987', meses: 1, metodo_pago: 'PSE' });
     assert.equal(crear.status, 201);
-    assert.equal(crear.body.monto, 80000);
+    assert.equal(crear.body.monto, 100000);
     // renovación: empieza el día siguiente al vencimiento anterior o hoy (lo que sea posterior)
     const bloqueado = await api('POST', '/ingresos', { placa: 'XYZ987' });
     assert.equal(bloqueado.body.codigo, 'MENSUALIDAD_VENCIDA'); // aún sin pago aprobado
@@ -112,7 +112,7 @@ test('RF06 pago: mensualidad queda pendiente hasta que el Sistema de Pago confir
 
 test('RF06 pago rechazado anula la mensualidad', async () => {
     const crear = await api('POST', '/mensualidades', { placa: 'QRS789', meses: 2, metodo_pago: 'Tarjeta' });
-    assert.equal(crear.body.monto, 440000);
+    assert.equal(crear.body.monto, 500000);
     await api('POST', '/pagos/confirmacion', { referencia_externa: crear.body.referencia_externa, estado: 'Rechazado' });
     const m = await fila('SELECT estado_pago FROM Mensualidad WHERE id_mensualidad = $1', [crear.body.id_mensualidad]);
     assert.equal(m.estado_pago, 'Anulada');

@@ -1,4 +1,4 @@
-// Capa DataAccess - Usuario. `ex` = pool o cliente de transacción.
+﻿// Capa DataAccess - Usuario. `ex` = pool o cliente de transacciÃ³n.
 const { Usuario } = require('../models');
 
 const COLUMNAS_EDITABLES = ['nombre', 'documento', 'telefono', 'correo', 'tipo_usuario'];
@@ -24,7 +24,7 @@ exports.buscarPorDocumento = async (ex, documento) => {
     return rows.length ? new Usuario(rows[0]) : null;
 };
 
-// Búsqueda por nombre, documento, correo o placa de alguno de sus vehículos
+// BÃºsqueda por nombre, documento, correo o placa de alguno de sus vehÃ­culos
 exports.listar = async (ex, { buscar = null, tipo = null, estado = null, limite = 50, desplazamiento = 0 } = {}) => {
     const patron = buscar ? comodin(buscar) : null;
     const filtro = `
@@ -55,3 +55,12 @@ exports.actualizar = async (ex, id, campos) => {
 
 exports.cambiarEstado = async (ex, id, estado) =>
     ex.query('UPDATE Usuario SET estado = $1 WHERE id_usuario = $2', [estado, id]);
+
+// Asigna credenciales únicamente a usuarios activos; nunca devuelve el hash.
+exports.asignarCredenciales = async (ex, id, { usuario_login, password_hash }) => {
+    const { rows } = await ex.query(
+        'UPDATE Usuario SET usuario_login = $1, password_hash = $2 WHERE id_usuario = $3 AND estado = $4 RETURNING id_usuario, nombre, usuario_login, tipo_usuario, estado',
+        [usuario_login, password_hash, id, 'Activo']);
+    return rows.length ? new Usuario(rows[0]) : null;
+};
+

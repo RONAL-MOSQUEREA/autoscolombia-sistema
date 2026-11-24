@@ -1,0 +1,58 @@
+﻿flowchart TB
+  subgraph Cliente[Cliente web]
+    UI[public/index.html\nInterfaz / Mockup funcional]
+  end
+  subgraph Presentacion[Presentacion y autenticacion]
+    API[Express + routes/api.js]
+    AuthCtrl[authController.js\nLogin, logout, /me y /mi-cuenta]
+    Auth[auth.js / crearRequireAuth]
+    Ctrl[operacionesController.js]
+    UCtrl[usuariosController.js]
+    CCtrl[celdasController.js]
+  end
+  subgraph Negocio[Logica de negocio]
+    CO[ControlOperaciones\nIteracion 1 + pagos]
+    GU[GestionUsuarios\nGestion y asignacion de credenciales]
+    GC[GestionCeldas\nIteracion 2]
+    VM[ValidadorMensualidad]
+    AC[AsignadorCelda]
+  end
+  subgraph Datos[Acceso a datos]
+    PR[PagoRepository]
+    MR[MensualidadRepository]
+    VR[VehiculoRepository]
+    AR[RegistroAccesoRepository]
+    UR[UsuarioRepository]
+    CR[CeldaRepository]
+    DB[(PostgreSQL)]
+  end
+  PSP[Sistema de Pago externo]
+  UI -->|Vista segun rol| API
+  API --> AuthCtrl
+  AuthCtrl --> Auth
+  AuthCtrl -->|/mi-cuenta: valida rol Cliente y consulta cuenta, vehiculos y mensualidad| DB
+  API --> Auth
+  Auth -->|Consulta estado y rol en cada solicitud| UR
+  API --> Ctrl
+  API --> UCtrl
+  API --> CCtrl
+  Ctrl --> CO
+  UCtrl --> GU
+  CCtrl --> GC
+  CO --> VM
+  CO --> AC
+  CO --> PR
+  CO --> MR
+  CO --> VR
+  CO --> AR
+  GU -->|Asigna usuario y hash de contrasena| UR
+  GC --> CR
+  PR --> DB
+  MR --> DB
+  VR --> DB
+  AR --> DB
+  UR --> DB
+  CR --> DB
+  PSP -->|Webhook protegido| API
+
+

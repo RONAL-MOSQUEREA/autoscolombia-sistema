@@ -419,3 +419,38 @@ test('Integración RF01: una celda nueva se asigna sola; en Mantenimiento o de o
     await salir('ABC123');
     await pool.query("UPDATE Celda SET estado = 'Disponible'");
 });
+
+test('Seguridad: asignar credenciales e invalidar inmediatamente una sesión al inactivar la cuenta', async () => {
+    assert.ok(ids.juan, 'Juan debe existir por las pruebas anteriores');
+    const asignacion = await api('PATCH', `/usuarios/${ids.juan}/credenciales`, {
+        usuario_login: 'juan_prueba',
+        password: 'Clave-Juan-Pruebas-2026!'
+    });
+    assert.equal(asignacion.status, 200);
+    assert.equal(asignacion.body.usuario.usuario_login, 'juan_prueba');
+    assert.equal(JSON.stringify(asignacion.body).includes('password_hash'), false);
+
+    const login = await fetch(base + '/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuario: 'juan_prueba', password: 'Clave-Juan-Pruebas-2026!' })
+    });
+    assert.equal(login.status, 200);
+    const cookieJuan = login.headers.get('set-cookie').split(';')[0];
+
+    try {
+        const antes = await fetch(base + '/auth/me', { headers: { Cookie: cookieJuan } });
+        assert.equal(antes.status, 200, 'la sesión de Juan debe funcionar antes de inactivarlo');
+
+        const inactivacion = await api('PATCH', `/usuarios/${ids.juan}/estado`, { estado: 'Inactivo' });
+        assert.equal(inactivacion.status, 200);
+
+        const despues = await fetch(base + '/auth/me', { headers: { Cookie: cookieJuan } });
+        const respuesta = await despues.json();
+        assert.equal(despues.status, 401);
+        assert.equal(respuesta.codigo, 'CUENTA_INACTIVA');
+        assert.match(despues.headers.get('set-cookie') || '', /Max-Age=0/);
+    } finally {
+        await api('PATCH', `/usuarios/${ids.juan}/estado`, { estado: 'Activo' });
+    }
+});

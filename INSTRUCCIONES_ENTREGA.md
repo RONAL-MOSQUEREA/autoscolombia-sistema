@@ -1,66 +1,88 @@
-# Entrega académica – Autos Colombia (Iteraciones 1 y 2)
+﻿# Entrega académica – Autos Colombia (Iteraciones 1, 2 y 3)
 
-## Contenido entregado
-- Aplicativo web y API REST (Node.js + Express).
-- Persistencia PostgreSQL y script de creación con datos demostrativos.
-- Gestión de operaciones, mensualidades/pagos, novedades, usuarios, vehículos y celdas.
-- Documentación académica en PDF y Word editable.
-- Requerimientos, historias de usuario, mockups, diagramas UML y plan de pruebas dentro de `docs/`.
-- Guion para grabar el video demostrativo: `docs/GUION_VIDEO.md`.
-- Configuración Docker para levantar aplicación y base de datos en conjunto.
+## 1. Contenido de la entrega
+- Aplicación web y API REST desarrolladas con Node.js y Express.
+- Persistencia de datos en PostgreSQL.
+- Gestión de operaciones, usuarios, vehículos, celdas, mensualidades y pagos.
+- Historial administrativo de pagos, filtros, resumen financiero, paginación y tarifas.
+- Autenticación, autorización por roles y gestión de credenciales.
+- Documentación de la Evidencia de Aprendizaje 3 en `docs/EA3/`.
+- Historias de usuario, requerimientos, plan de pruebas y diagramas UML actualizados.
+- Mockups actualizados según los permisos de cada rol.
+- Video demostrativo de la aplicación: cargado y disponible para revisión.
 
-## Opción A – Ejecutar con Docker (recomendada)
-Requiere Docker Desktop con Docker Compose.
-1. Descomprime el proyecto.
-2. Abre una terminal dentro de esta carpeta.
-3. Ejecuta: `docker compose up --build`
-4. Abre: http://localhost:3000
-5. Comprueba la API: http://localhost:3000/api/health
+## 2. Requisitos
+- Node.js 18 o superior.
+- PostgreSQL 12 o superior.
+- Dependencias instaladas mediante `npm install`.
+- Base de datos PostgreSQL configurada mediante el archivo `.env`.
 
-Para detener: `docker compose down`.
-Para borrar también la base de datos local de demostración: `docker compose down -v`
-(esto elimina los datos guardados en el volumen).
+## 3. Ejecución local
+1. Crear la base de datos `autoscolombiadb`.
+2. Configurar las variables de conexión en `.env`, tomando como referencia `.env.example`.
+3. Para una base de datos nueva, ejecutar `database/script_pg.sql` sobre esa base vacía. Este script recrea las tablas y elimina los datos existentes; no ejecutarlo sobre una base con información que se quiera conservar.
+4. Instalar dependencias con `npm install`.
+5. Para una base existente que deba conservar sus datos, revisar la guía de migración antes de ejecutar `npm run bd:migrar`.
+6. Crear el administrador inicial si todavía no existe, mediante `npm run admin:crear`.
+7. Iniciar el servidor con `npm start`.
+8. Abrir `http://localhost:3000`.
+9. Verificar el servicio en `http://localhost:3000/api/health`.
 
-La primera inicialización ejecuta `database/script_pg.sql` y carga datos de ejemplo.
-Si el volumen ya existe, PostgreSQL no vuelve a ejecutar el script automáticamente.
+## 4. Ejecución con Docker
+Se requiere Docker Desktop con Docker Compose.
+1. Abrir una terminal en la carpeta del proyecto.
+2. Ejecutar `docker compose up --build`.
+3. Abrir `http://localhost:3000`.
+4. Comprobar `http://localhost:3000/api/health`.
 
-## Opción B – Ejecutar sin Docker
-Requisitos: Node.js 18+ y PostgreSQL 12+.
-1. Crea la base `autoscolombiadb` en PostgreSQL.
-2. Ejecuta `database/script_pg.sql` conectado a esa base. **El script recrea las tablas y borra los datos previos.**
-3. Copia `.env.example` a `.env` y configura `DB_PASSWORD` con tu contraseña local.
-4. En esta carpeta ejecuta `npm install`.
-5. Ejecuta `npm run bd:migrar` si la base ya existía y quieres conservar datos; para base nueva, el script `script_pg.sql` ya incluye autenticación.
-6. Habilita el administrador con `npm run admin:crear -- 9999999999 admin "Una-Clave-Privada-2026!"`.
-7. Ejecuta `npm start`.
-8. Abre http://localhost:3000 y valida `/api/health`.
+Para detener los contenedores: `docker compose down`.
+El comando `docker compose down -v` elimina también el volumen de datos de demostración.
 
-## Pruebas
-Ejecuta `npm test` con PostgreSQL encendido y la base configurada. Las pruebas de integración
-utilizan la base indicada en `.env` y limpian algunos registros de prueba; no ejecutes contra
-una base con información real. Se agregó una suite unitaria de seguridad (`tests/auth.test.js`) para hash de contraseñas, sesiones y permisos. Las pruebas de integración requieren dependencias instaladas y PostgreSQL configurado; no se pudieron ejecutar aquí porque no había PostgreSQL disponible y el registro npm no estuvo accesible para instalar dependencias. La suite unitaria de seguridad sí se ejecutó: 3 pruebas aprobadas.
+## 5. Usuarios, autenticación y permisos
+- El inicio de sesión se realiza desde la aplicación.
+- Los permisos se determinan según el rol registrado para cada cuenta.
+- Los roles contemplados son Administrador, Operario y Cliente.
+- El Administrador puede asignar credenciales desde el módulo de usuarios a cuentas activas.
+- Las contraseñas se almacenan mediante hash seguro con scrypt.
+- Las rutas protegidas verifican la sesión y el estado actual de la cuenta.
+- Cuando una cuenta se inactiva, las sesiones existentes quedan invalidadas y las solicitudes protegidas reciben HTTP 401 con el código `CUENTA_INACTIVA`.
+- La asignación de credenciales no expone el hash de la contraseña en la respuesta.
 
-## Preparación para GitHub
-El ZIP está limpio: no incluye `.git`, `.env`, contraseñas ni `node_modules`.
-En la carpeta del proyecto:
-```bash
-git init
-git add .
-git commit -m "Entrega Autos Colombia - iteraciones 1 y 2"
-git branch -M main
-git remote add origin https://github.com/USUARIO/REPOSITORIO.git
-git push -u origin main
-```
-Sustituye la URL por la del repositorio que te corresponda. Si ya tienes un repositorio
-remoto creado, no repitas `git remote add origin`; revisa primero `git remote -v`.
+## 6. Pruebas
+Ejecutar `npm test` con PostgreSQL disponible y las variables de entorno configuradas.
 
-## Pendiente antes de entregar
-- Completar en `docs/DOCUMENTACION_EA2_editable.docx` el nombre del estudiante y los datos
-  institucionales que solicite la portada, si faltan.
-- Grabar y subir el video siguiendo `docs/GUION_VIDEO.md`.
-- Pegar el enlace real de YouTube en la sección 2.8 del documento y comprobar que se pueda abrir.
-- Ejecutar `npm test` en un equipo con PostgreSQL y adjuntar/capturar el resultado real.
-- Confirmar que el repositorio GitHub contiene la misma versión final del ZIP.
+La preparación de las pruebas utiliza la base de datos de pruebas `autoscolombiadb_test`, mediante `npm run test:preparar`. No configurar la base de datos principal como base de pruebas.
 
-## Seguridad y alcance conocido
-Esta versión incorpora login, contraseñas protegidas con scrypt, cookie de sesión HttpOnly y permisos en backend para Administrador, Operario y Cliente. Las sesiones están almacenadas en memoria y se invalidan al reiniciar el servidor; para producción se recomienda un almacén persistente de sesiones, HTTPS con `COOKIE_SECURE=true`, protección adicional contra fuerza bruta y secretos robustos. Configure `PAGO_WEBHOOK_SECRET` para el sistema de pagos externo. Los datos y tarifas incluidos son demostrativos/configurables. Consulte `docs/SEGURIDAD_LOGIN_ROLES.md` y `docs/GUIA_LOGIN_ROLES.md`.
+Resultado de la ejecución completa verificada:
+- Autenticación: 3 pruebas aprobadas.
+- Iteración 1: 33 pruebas aprobadas.
+- Iteración 2: 30 pruebas aprobadas.
+- Iteración 3: 3 pruebas aprobadas.
+- Total: 69 pruebas aprobadas, sin fallos.
+
+Para ejecutar suites por separado:
+- `npm run test:it1`
+- `npm run test:it2`
+- `npm run test:it3`
+
+## 7. Documentación de la Entrega 3
+La carpeta `docs/EA3/` contiene:
+- `REQUERIMIENTOS_EA3.md`: requerimientos funcionales y no funcionales.
+- `HISTORIAS_USUARIO_EA3.md`: historias de usuario y criterios de aceptación.
+- `PLAN_PRUEBAS_EA3.md`: casos de prueba, incluidos los escenarios de seguridad.
+- `SD_integrado_iteraciones_1_2_3.mmd`: diagramas de secuencia integrados.
+- `CD_componentes_actualizado.mmd`: diagrama de componentes.
+- `CU_gestion_pagos.mmd`: casos de uso de gestión de pagos.
+- `README.md`: índice de la documentación de EA3.
+
+Los diagramas SVG actualizados están en `docs/diagramas/secuencia_ea3_actualizados/`.
+Los mockups actualizados están en `docs/mockups/`.
+
+## 8. Seguridad y configuración
+- No publicar el archivo `.env`, contraseñas ni credenciales.
+- Configurar `PAGO_WEBHOOK_SECRET` antes de utilizar el sistema de pagos fuera de una demostración.
+- Para producción se recomienda HTTPS, `COOKIE_SECURE=true`, un almacén persistente de sesiones y protección adicional contra intentos repetidos de inicio de sesión.
+- Las sesiones actuales se almacenan en memoria y se invalidan al reiniciar el servidor.
+- Las tarifas y los datos demostrativos son configurables.
+
+Consultar `docs/SEGURIDAD_LOGIN_ROLES.md` y `docs/GUIA_LOGIN_ROLES.md` para información adicional.

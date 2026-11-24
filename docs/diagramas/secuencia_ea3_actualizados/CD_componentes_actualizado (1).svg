@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1120" viewBox="0 0 1600 1120">
+<defs>
+  <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#475569"/></marker>
+  <style>
+    .title{font: bold 30px Arial,sans-serif;fill:#0f172a}
+    .sub{font:16px Arial,sans-serif;fill:#475569}
+    .head{font:bold 20px Arial,sans-serif;fill:#1e3a8a}
+    .bh{font:bold 17px Arial,sans-serif;fill:#0f172a}
+    .tx{font:15px Arial,sans-serif;fill:#334155}
+    .sm{font:13px Arial,sans-serif;fill:#475569}
+    .panel{fill:#f8fafc;stroke:#94a3b8;stroke-width:2;rx:16}
+    .node{fill:#fff;stroke:#64748b;stroke-width:1.7;rx:10}
+    .security{fill:#eff6ff;stroke:#3b82f6;stroke-width:2;rx:10}
+    .business{fill:#f0fdf4;stroke:#16a34a;stroke-width:1.7;rx:10}
+    .data{fill:#fff7ed;stroke:#ea580c;stroke-width:1.7;rx:10}
+    .edge{fill:none;stroke:#475569;stroke-width:2;marker-end:url(#arr)}
+    .dash{fill:none;stroke:#64748b;stroke-width:1.8;stroke-dasharray:7 5;marker-end:url(#arr)}
+  </style>
+</defs>
+<rect width="1600" height="1120" fill="#ffffff"/>
+<text x="800" y="48" text-anchor="middle" class="title">Diagrama de componentes — Autos Colombia EA3</text>
+<text x="800" y="78" text-anchor="middle" class="sub">Autenticación, autorización por roles, gestión de credenciales y consulta de cuenta del Cliente</text>
+
+<!-- Layer panels -->
+<rect x="35" y="115" width="280" height="635" class="panel"/>
+<rect x="340" y="115" width="440" height="635" class="panel"/>
+<rect x="805" y="115" width="390" height="635" class="panel"/>
+<rect x="1220" y="115" width="345" height="635" class="panel"/>
+<text x="175" y="150" text-anchor="middle" class="head">Cliente web</text>
+<text x="560" y="150" text-anchor="middle" class="head">Presentación y seguridad</text>
+<text x="1000" y="150" text-anchor="middle" class="head">Lógica de negocio</text>
+<text x="1392" y="150" text-anchor="middle" class="head">Acceso a datos</text>
+
+<!-- UI -->
+<rect x="65" y="195" width="220" height="105" class="node"/>
+<text x="175" y="225" text-anchor="middle" class="bh">Interfaz web</text>
+<text x="175" y="252" text-anchor="middle" class="tx">public/index.html</text>
+<text x="175" y="275" text-anchor="middle" class="sm">Login y vistas según rol</text>
+<rect x="65" y="345" width="220" height="135" class="node"/>
+<text x="175" y="375" text-anchor="middle" class="bh">Vistas de la aplicación</text>
+<text x="175" y="407" text-anchor="middle" class="tx">Administrador: módulos</text>
+<text x="175" y="432" text-anchor="middle" class="tx">Operario: operaciones</text>
+<text x="175" y="457" text-anchor="middle" class="tx">Cliente: Mi cuenta</text>
+<path d="M175 300 V345" class="edge"/>
+
+<!-- Presentation -->
+<rect x="375" y="190" width="370" height="90" class="security"/>
+<text x="560" y="222" text-anchor="middle" class="bh">Express — routes/api.js</text>
+<text x="560" y="250" text-anchor="middle" class="tx">Rutas internas protegidas por sesión</text>
+<rect x="375" y="325" width="170" height="125" class="security"/>
+<text x="460" y="355" text-anchor="middle" class="bh">auth.js</text>
+<text x="460" y="382" text-anchor="middle" class="tx">crearRequireAuth</text>
+<text x="460" y="407" text-anchor="middle" class="sm">Valida sesión, estado</text>
+<text x="460" y="428" text-anchor="middle" class="sm">y rol vigente</text>
+<rect x="575" y="325" width="170" height="155" class="security"/>
+<text x="660" y="355" text-anchor="middle" class="bh">authController</text>
+<text x="660" y="382" text-anchor="middle" class="tx">Login / logout /me</text>
+<text x="660" y="407" text-anchor="middle" class="tx">/mi-cuenta</text>
+<text x="660" y="438" text-anchor="middle" class="sm">/mi-cuenta solo Cliente</text>
+<text x="660" y="459" text-anchor="middle" class="sm">otros roles: HTTP 403</text>
+<rect x="375" y="510" width="170" height="100" class="node"/>
+<text x="460" y="540" text-anchor="middle" class="bh">Controladores</text>
+<text x="460" y="570" text-anchor="middle" class="tx">Operaciones / celdas</text>
+<rect x="575" y="510" width="170" height="100" class="node"/>
+<text x="660" y="540" text-anchor="middle" class="bh">usuariosController</text>
+<text x="660" y="570" text-anchor="middle" class="tx">Gestión de usuarios</text>
+<rect x="475" y="650" width="170" height="65" class="node"/>
+<text x="560" y="677" text-anchor="middle" class="bh">routes/errores.js</text>
+<text x="560" y="699" text-anchor="middle" class="sm">Errores HTTP coherentes</text>
+
+<!-- Business -->
+<rect x="835" y="190" width="330" height="110" class="business"/>
+<text x="1000" y="222" text-anchor="middle" class="bh">GestionUsuarios</text>
+<text x="1000" y="250" text-anchor="middle" class="tx">Crear, actualizar e inactivar</text>
+<text x="1000" y="275" text-anchor="middle" class="sm">Asignar login y hash scrypt</text>
+<rect x="835" y="345" width="330" height="105" class="business"/>
+<text x="1000" y="378" text-anchor="middle" class="bh">ControlOperaciones</text>
+<text x="1000" y="407" text-anchor="middle" class="tx">Ingresos, salidas, mensualidades</text>
+<text x="1000" y="430" text-anchor="middle" class="tx">y pagos</text>
+<rect x="835" y="495" width="330" height="90" class="business"/>
+<text x="1000" y="528" text-anchor="middle" class="bh">GestionCeldas</text>
+<text x="1000" y="557" text-anchor="middle" class="tx">Registro, actualización y eliminación</text>
+<rect x="835" y="625" width="330" height="85" class="business"/>
+<text x="1000" y="658" text-anchor="middle" class="bh">Servicios de dominio</text>
+<text x="1000" y="685" text-anchor="middle" class="tx">ValidadorMensualidad · AsignadorCelda</text>
+
+<!-- Data -->
+<rect x="1250" y="190" width="285" height="110" class="data"/>
+<text x="1392" y="222" text-anchor="middle" class="bh">UsuarioRepository</text>
+<text x="1392" y="250" text-anchor="middle" class="tx">Consulta estado y rol vigente</text>
+<text x="1392" y="275" text-anchor="middle" class="sm">Guarda login y hash de contraseña</text>
+<rect x="1250" y="345" width="285" height="105" class="data"/>
+<text x="1392" y="378" text-anchor="middle" class="bh">Otros repositorios</text>
+<text x="1392" y="407" text-anchor="middle" class="tx">Vehículo · Celda · Mensualidad</text>
+<text x="1392" y="430" text-anchor="middle" class="tx">Pago · Registro de acceso</text>
+<rect x="1250" y="510" width="285" height="105" class="data"/>
+<text x="1392" y="545" text-anchor="middle" class="bh">PostgreSQL</text>
+<text x="1392" y="575" text-anchor="middle" class="tx">Persistencia de usuarios</text>
+<text x="1392" y="598" text-anchor="middle" class="tx">y operaciones</text>
+
+<!-- Edges -->
+<path d="M285 245 H375" class="edge"/>
+<text x="330" y="232" text-anchor="middle" class="sm">solicitudes</text>
+<path d="M560 280 V305 H460 V325" class="edge"/>
+<path d="M560 305 H660 V325" class="edge"/>
+<path d="M545 390 H575" class="edge"/>
+<path d="M460 450 V485 H460 V510" class="edge"/>
+<path d="M660 480 V495 H660 V510" class="edge"/>
+<path d="M745 230 H790 V245 H835" class="edge"/>
+<path d="M745 555 H790 V245 H835" class="edge"/>
+<path d="M745 555 H800 V397 H835" class="edge"/>
+<path d="M745 555 H790 V540 H835" class="edge"/>
+<path d="M1165 245 H1250" class="edge"/>
+<path d="M1165 397 H1205 V397 H1250" class="edge"/>
+<path d="M1165 540 H1205 V397 H1250" class="edge"/>
+<path d="M1392 300 V510" class="edge"/>
+<path d="M1392 450 V510" class="edge"/>
+<path d="M745 402 H790 V565 H1228 V565 H1250" class="dash"/>
+<text x="1005" y="555" text-anchor="middle" class="sm">/mi-cuenta: consulta directa de cuenta, vehículos y última mensualidad</text>
+<path d="M545 385 H560 V170 H560 V190" class="dash"/>
+
+<!-- Role and security notes -->
+<rect x="55" y="785" width="1490" height="275" class="panel"/>
+<text x="800" y="825" text-anchor="middle" class="head">Autorización por roles implementada</text>
+<rect x="85" y="855" width="445" height="105" class="node"/>
+<text x="307" y="885" text-anchor="middle" class="bh">Administrador</text>
+<text x="307" y="915" text-anchor="middle" class="tx">Usuarios, credenciales, vehículos, celdas,</text>
+<text x="307" y="940" text-anchor="middle" class="tx">mensualidades, pagos y operaciones</text>
+<rect x="577" y="855" width="445" height="105" class="node"/>
+<text x="799" y="885" text-anchor="middle" class="bh">Operario</text>
+<text x="799" y="915" text-anchor="middle" class="tx">Ingresos, salidas, dashboard, novedades</text>
+<text x="799" y="940" text-anchor="middle" class="tx">y consulta de estado del vehículo</text>
+<rect x="1069" y="855" width="445" height="105" class="node"/>
+<text x="1291" y="885" text-anchor="middle" class="bh">Cliente</text>
+<text x="1291" y="915" text-anchor="middle" class="tx">Mi cuenta: datos propios, vehículos</text>
+<text x="1291" y="940" text-anchor="middle" class="tx">y última mensualidad / estado de pago</text>
+<text x="800" y="1000" text-anchor="middle" class="tx">Cada solicitud protegida valida la sesión y consulta en la base de datos el estado y rol actuales del usuario.</text>
+<text x="800" y="1028" text-anchor="middle" class="tx">Si la cuenta está inactiva: se invalida la sesión y se responde HTTP 401 CUENTA_INACTIVA.</text>
+<text x="800" y="1048" text-anchor="middle" class="sm">El rol procede del servidor; no se confía en un rol enviado por el cliente. El hash nunca se devuelve.</text>
+</svg>

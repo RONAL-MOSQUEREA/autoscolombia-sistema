@@ -82,6 +82,7 @@
     <a href="#operacion" data-vista="operacion">Operación</a>
     <a href="#usuarios" data-vista="usuarios">Usuarios</a>
     <a href="#celdas" data-vista="celdas">Celdas</a>
+    <a href="#pagos" data-vista="pagos">Gestión de pagos</a>
 </nav>
 <main id="contenidoApp" hidden>
     <section id="vistaCliente" class="card" hidden><h2>Mi cuenta</h2><div id="datosCuenta"></div></section>
@@ -151,6 +152,7 @@
                     <div><label>Meses</label><input id="mesesMens" type="number" min="1" max="12" value="1"></div>
                     <div><label>Método</label><select id="metodoMens"><option>PSE</option><option>Tarjeta</option><option>Efectivo</option></select></div>
                 </div>
+                <p class="nota">Tarifas mensuales: automóvil/camioneta $250.000 · motocicleta $100.000. El valor se multiplica por los meses solicitados.</p>
                 <button type="submit" class="verde">Generar mensualidad y pago</button>
             </form>
             <div class="msg" id="msgMens"></div>
@@ -195,6 +197,15 @@
             <div class="card" id="cardDetalleUsuario" hidden>
                 <div class="titulofila"><h2>Detalle del usuario</h2><button type="button" class="mini gris" id="btnCerrarDetalle">Cerrar</button></div>
                 <div class="detalle" id="datosUsuario"></div>
+                <form id="formCredenciales" novalidate style="margin-top:14px" hidden>
+                    <h2 style="font-size:14px">Acceso a la aplicaci�n</h2>
+                    <div class="fila">
+                        <div><label for="cUsuario">Nombre de usuario *</label><input id="cUsuario" maxlength="40" autocomplete="username" required></div>
+                        <div><label for="cPassword">Nueva contrase�a *</label><input id="cPassword" type="password" minlength="10" autocomplete="new-password" required></div>
+                    </div>
+                    <button type="submit" id="btnGuardarCredenciales">Asignar credenciales</button>
+                </form>
+                <div class="msg" id="msgCredenciales"></div>
                 <h2 style="margin-top:14px">Vehículos</h2>
                 <table><thead><tr><th>Placa</th><th>Tipo</th><th>Mensualidad</th><th>Dentro</th><th></th></tr></thead><tbody id="tbVehiculos"></tbody></table>
                 <form id="formVehiculo" novalidate style="margin-top:10px">
@@ -246,6 +257,33 @@
             </div>
         </div>
     </div>
+
+    <!-- ITERACIÓN 3: GESTIÓN DE PAGOS -->
+    <div id="vistaPagos" hidden>
+      <section class="card">
+        <div class="titulofila"><h2>Gestión de pagos</h2><span class="nota" id="totalPagos"></span></div>
+        <div class="stats" style="margin:12px 0">
+          <div class="stat"><b id="pAprobados">0</b><span>Pagos aprobados</span></div>
+          <div class="stat"><b id="pPendientes">0</b><span>Pagos pendientes</span></div>
+          <div class="stat"><b id="pRechazados">0</b><span>Pagos rechazados</span></div>
+          <div class="stat"><b id="pRecaudado">$0</b><span>Total recaudado</span></div>
+        </div>
+        <div class="barra">
+          <div><label for="fPagoPlaca">Placa</label><input id="fPagoPlaca" maxlength="7" placeholder="ABC123"></div>
+          <div class="fijo"><label for="fPagoEstado">Estado</label><select id="fPagoEstado"><option value="">Todos</option><option>Pendiente</option><option>Aprobado</option><option>Rechazado</option></select></div>
+          <div><label for="fPagoDesde">Desde</label><input id="fPagoDesde" type="date"></div>
+          <div><label for="fPagoHasta">Hasta</label><input id="fPagoHasta" type="date"></div>
+          <div class="fijo"><button type="button" id="btnFiltrarPagos">Consultar</button></div>
+          <div class="fijo"><button type="button" class="gris" id="btnLimpiarPagos">Limpiar</button></div>
+        </div>
+        <div class="msg" id="msgPagos"></div>
+        <div style="overflow-x:auto">
+          <table><thead><tr><th>Fecha</th><th>Referencia</th><th>Propietario</th><th>Placa</th><th>Concepto</th><th>Método</th><th>Valor</th><th>Estado</th></tr></thead><tbody id="tbPagos"></tbody></table>
+        </div>
+        <div class="fila" style="margin-top:12px"><button type="button" class="gris" id="btnPagosAnterior">Anterior</button><span class="nota" id="paginaPagos" style="text-align:center;padding:12px"></span><button type="button" id="btnPagosSiguiente">Siguiente</button></div>
+        <p class="nota">El historial es de consulta. La aprobación o rechazo de un pago se realiza mediante la confirmación autenticada del sistema de pago; no se alteran transacciones históricas desde esta pantalla.</p>
+      </section>
+    </div>
 </main>
 
 <script>
@@ -290,6 +328,10 @@ const TITULOS = {
     TICKET_NO_COINCIDE: 'El ticket no corresponde a la placa',
     PLACA_INVALIDA: 'Placa con formato inválido',
     PAGO_PENDIENTE: 'Ya existe un pago pendiente para esta placa',
+    PAGO_NO_ENCONTRADO: 'No existe el pago solicitado',
+    PAGO_YA_PROCESADO: 'El pago ya fue procesado',
+    FILTRO_INVALIDO: 'Revise los filtros de consulta',
+    PAGINACION_INVALIDA: 'La paginación no es válida',
     DESCRIPCION_MUY_LARGA: 'Descripción demasiado larga',
     NO_AUTORIZADO: 'El Sistema de Pago no está autorizado',
     CONFLICTO_CONCURRENCIA: 'Sistema ocupado, intente de nuevo',
@@ -439,7 +481,7 @@ $('btnAprobar').onclick = () => confirmar('Aprobado');
 $('btnRechazar').onclick = () => confirmar('Rechazado');
 
 // ====================== ITERACIÓN 2: navegación por pestañas ======================
-const VISTAS = ['operacion', 'usuarios', 'celdas'];
+const VISTAS = ['operacion', 'usuarios', 'celdas', 'pagos'];
 function mostrarVista() {
     const v = VISTAS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'operacion';
     VISTAS.forEach(n => { $('vista' + n[0].toUpperCase() + n.slice(1)).hidden = n !== v; });
@@ -447,6 +489,7 @@ function mostrarVista() {
     if (v === 'operacion') cargarDashboard();
     if (v === 'usuarios') { limpiarMsg('msgUsuarios'); cargarUsuarios(); }
     if (v === 'celdas') { limpiarMsg('msgCeldas'); cargarCeldas(); }
+    if (v === 'pagos') { limpiarMsg('msgPagos'); paginaPagosActual = 1; cargarPagos(); }
 }
 window.addEventListener('hashchange', mostrarVista);
 const limpiarMsg = (id) => { $(id).className = 'msg'; $(id).innerHTML = ''; };
@@ -551,9 +594,22 @@ async function abrirDetalleUsuario(id) {
     cancelarEdicionVehiculo(); limpiarMsg('msgVehiculo');
     $('cardDetalleUsuario').hidden = false;
     $('formVehiculo').hidden = !(u.estado === 'Activo' && u.tipo_usuario === 'Cliente');
+    formCredenciales.hidden = u.estado !== 'Activo';
+    formCredenciales.reset(); limpiarMsg('msgCredenciales');
     document.querySelectorAll('#tbUsuarios tr').forEach(tr => tr.classList.toggle('sel', Number(tr.dataset.id) === id));
 }
 $('btnCerrarDetalle').onclick = () => { usuarioAbierto = null; $('cardDetalleUsuario').hidden = true; cargarUsuarios(); };
+$('formCredenciales').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await bloqueando(botonesDe(e.target), async () => {
+        const datos = { usuario_login: val('cUsuario'), password: $('cPassword').value };
+        const r = await api('PATCH', '/usuarios/' + usuarioAbierto + '/credenciales', datos);
+        $('cPassword').value = '';
+        if (!r.ok) { mostrar('msgCredenciales', 'error', errorHtml(r.data)); return; }
+        await abrirDetalleUsuario(usuarioAbierto);
+        mostrar('msgCredenciales', 'ok', `<b>${esc(r.data.mensaje)}</b>`);
+    });
+});
 
 function cancelarEdicionVehiculo() {
     vehiculoEditando = null; $('formVehiculo').reset(); $('vPlaca').disabled = false;
@@ -656,6 +712,42 @@ $('tbCeldas').addEventListener('click', async (e) => {
     }
 });
 
+// ====================== ITERACIÓN 3: historial y consulta de pagos ======================
+let paginaPagosActual = 1;
+async function cargarPagos() {
+  const q = new URLSearchParams({ pagina: String(paginaPagosActual), limite: '20' });
+  if (val('fPagoPlaca').trim()) q.set('placa', val('fPagoPlaca'));
+  if (val('fPagoEstado')) q.set('estado', val('fPagoEstado'));
+  if (val('fPagoDesde')) q.set('desde', val('fPagoDesde'));
+  if (val('fPagoHasta')) q.set('hasta', val('fPagoHasta'));
+  const r = await api('GET', '/pagos?' + q.toString());
+  if (!r.ok) { mostrar('msgPagos', 'error', errorHtml(r.data)); $('tbPagos').innerHTML = ''; return; }
+  limpiarMsg('msgPagos');
+  const d = r.data, x = d.resumen;
+  $('pAprobados').textContent = x.aprobados;
+  $('pPendientes').textContent = x.pendientes;
+  $('pRechazados').textContent = x.rechazados;
+  $('pRecaudado').textContent = moneda(x.total_recaudado);
+  $('totalPagos').textContent = `${d.total} transacciones encontradas`;
+  $('tbPagos').innerHTML = d.pagos.map(p => `<tr>
+    <td>${esc(p.fecha_pago)}</td><td><code>${esc(p.referencia_externa)}</code></td>
+    <td>${esc(p.propietario)}</td><td><b>${esc(p.placa)}</b></td>
+    <td>${esc(p.fecha_inicio)} a ${esc(p.fecha_fin)}</td><td>${esc(p.metodo_pago)}</td>
+    <td>${moneda(p.monto)}</td><td><span class="badge b-${esc(p.estado_pago)}">${esc(p.estado_pago)}</span></td>
+  </tr>`).join('') || '<tr><td colspan="8" class="vacio">No hay pagos que coincidan con los filtros.</td></tr>';
+  const paginas = Math.max(1, Math.ceil(d.total / d.limite));
+  $('paginaPagos').textContent = `Página ${d.pagina} de ${paginas}`;
+  $('btnPagosAnterior').disabled = d.pagina <= 1;
+  $('btnPagosSiguiente').disabled = d.pagina >= paginas;
+}
+$('btnFiltrarPagos').onclick = () => { paginaPagosActual = 1; cargarPagos(); };
+$('btnLimpiarPagos').onclick = () => {
+  ['fPagoPlaca','fPagoEstado','fPagoDesde','fPagoHasta'].forEach(id => $(id).value = '');
+  paginaPagosActual = 1; cargarPagos();
+};
+$('btnPagosAnterior').onclick = () => { if (paginaPagosActual > 1) { paginaPagosActual--; cargarPagos(); } };
+$('btnPagosSiguiente').onclick = () => { paginaPagosActual++; cargarPagos(); };
+
 async function iniciarSesion() {
   const r = await api('POST', '/auth/login', { usuario: val('loginUsuario'), password: val('loginPassword') });
   if (!r.ok) { mostrar('msgLogin', 'error', esc(r.data.error || 'No fue posible iniciar sesión.')); return; }
@@ -672,7 +764,9 @@ async function cargarSesion() {
   $('vistaOperacion').hidden = sesionActual.rol === 'Cliente';
   document.querySelector('#tabs [data-vista="usuarios"]').hidden = sesionActual.rol !== 'Administrador';
   document.querySelector('#tabs [data-vista="celdas"]').hidden = sesionActual.rol !== 'Administrador';
-  if (sesionActual.rol !== 'Administrador' && ['#usuarios','#celdas'].includes(location.hash)) history.replaceState(null, '', location.pathname);
+  document.querySelector('#tabs [data-vista="pagos"]').hidden = sesionActual.rol !== 'Administrador';
+  $('cardMensualidad').hidden = sesionActual.rol !== 'Administrador';
+  if (sesionActual.rol !== 'Administrador' && ['#usuarios','#celdas','#pagos'].includes(location.hash)) history.replaceState(null, '', location.pathname);
   if (sesionActual.rol === 'Cliente') {
     const cuenta = await api('GET', '/auth/mi-cuenta');
     if (!cuenta.ok) { $('datosCuenta').textContent = cuenta.data.error; return; }
@@ -691,3 +785,5 @@ setInterval(() => { if (!document.hidden && !$('vistaOperacion').hidden) cargarD
 </script>
 </body>
 </html>
+
+

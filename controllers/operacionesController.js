@@ -9,5 +9,6 @@ module.exports = (control /* implementa IControlOperaciones */) => ({
     registrarNovedad:    manejar(201, (req) => control.registrarNovedad(req.body || {})),
     consultarNovedades:  manejar(200, (req) => control.consultarNovedades(req.params.placa)),
     registrarMensualidad: manejar(201, (req) => control.registrarMensualidad(req.body || {})),
-    confirmarPago:       manejar(200, (req) => control.confirmarPago(req.body || {}))
+    confirmarPago:       manejar(200, (req) => control.confirmarPago(req.body || {})),
+    consultarPagos:      manejar(200, (req) => control.consultarPagos(req.query || {}))
 });

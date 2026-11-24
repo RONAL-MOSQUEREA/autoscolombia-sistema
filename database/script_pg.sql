@@ -140,14 +140,14 @@ INSERT INTO Vehiculo (placa, id_usuario, marca, modelo, color, tipo) VALUES
 ('QRS789', 1, 'Toyota', 'Hilux','Blanco','Camioneta');    -- sin mensualidad
 
 INSERT INTO Mensualidad (placa, fecha_inicio, fecha_fin, valor, estado_pago) VALUES
-('ABC123', CURRENT_DATE - 10, CURRENT_DATE + 19, 180000, 'Pagada'),
-('XYZ987', CURRENT_DATE - 35, CURRENT_DATE - 5,   80000, 'Pagada'),
-('MNO456', CURRENT_DATE - 26, CURRENT_DATE + 3,  180000, 'Pagada');
+('ABC123', CURRENT_DATE - 10, CURRENT_DATE + 19, 250000, 'Pagada'),
+('XYZ987', CURRENT_DATE - 35, CURRENT_DATE - 5,  100000, 'Pagada'),
+('MNO456', CURRENT_DATE - 26, CURRENT_DATE + 3,  250000, 'Pagada');
 
 INSERT INTO Pago (id_mensualidad, monto, fecha_pago, metodo_pago, referencia_externa, estado_pago) VALUES
-(1, 180000, LOCALTIMESTAMP(0) - INTERVAL '10 days', 'PSE',     'PAY-SEED-0001', 'Aprobado'),
-(2,  80000, LOCALTIMESTAMP(0) - INTERVAL '35 days', 'Tarjeta', 'PAY-SEED-0002', 'Aprobado'),
-(3, 180000, LOCALTIMESTAMP(0) - INTERVAL '26 days', 'PSE',     'PAY-SEED-0003', 'Aprobado');
+(1, 250000, LOCALTIMESTAMP(0) - INTERVAL '10 days', 'PSE',     'PAY-SEED-0001', 'Aprobado'),
+(2, 100000, LOCALTIMESTAMP(0) - INTERVAL '35 days', 'Tarjeta', 'PAY-SEED-0002', 'Aprobado'),
+(3, 250000, LOCALTIMESTAMP(0) - INTERVAL '26 days', 'PSE',     'PAY-SEED-0003', 'Aprobado');
 
 INSERT INTO Celda (numero_celda, estado, tipo) VALUES
 (101, 'Disponible', 'Automovil'),

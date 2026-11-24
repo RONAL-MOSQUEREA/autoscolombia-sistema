@@ -1,0 +1,30 @@
+﻿flowchart LR
+  Admin[Administrador]
+  Pasarela[Sistema de Pago]
+  subgraph AutosColombia
+    UC1((Generar mensualidad y pago))
+    UC2((Consultar historial de pagos))
+    UC3((Filtrar por estado y placa))
+    UC4((Consultar por rango de fechas))
+    UC5((Ver resumen financiero))
+    UC6((Confirmar resultado del pago))
+    UC7((Actualizar estado de mensualidad))
+    UC0((Iniciar sesion))
+    UC8((Validar sesion y rol Administrador))
+  end
+  Admin --> UC1
+  Admin --> UC2
+  Admin --> UC3
+  Admin --> UC4
+  Admin --> UC5
+  Pasarela --> UC6
+  UC6 -. <<include>> .-> UC7
+  UC1 -. <<include>> .-> UC6
+  UC1 -. <<include>> .-> UC8
+  UC2 -. <<include>> .-> UC8
+  UC3 -. <<include>> .-> UC8
+  UC4 -. <<include>> .-> UC8
+  UC5 -. <<include>> .-> UC8
+
+  Admin --> UC0
+
